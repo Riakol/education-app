@@ -2,6 +2,7 @@ import asyncio
 import asyncpg
 
 from decouple import config
+from database import requests
 
 
 async def connect_to_db():
@@ -18,7 +19,7 @@ async def close_db_connection(conn):
 
 async def run_queries():
     conn = await connect_to_db()
-    await close_db_connection(conn)
+
 
 async def choose_lvl():
     conn = await connect_to_db()
@@ -27,9 +28,9 @@ async def choose_lvl():
 
 
 async def student_levels():
+    
     conn = await connect_to_db()
     rows = await choose_lvl()
-    await close_db_connection(conn)
 
     temp = []
     for row in rows:
@@ -37,11 +38,5 @@ async def student_levels():
     return temp
 
 
-# Основная функция
-async def main():
-    levels = await student_levels()  # Получаем уровни студентов
-    print(levels)  # Печатаем результат
-
-# Запуск основного события
 
 asyncio.run(run_queries())

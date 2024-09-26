@@ -33,10 +33,8 @@ async def main():
     async def start(message: Message, dialog_manager: DialogManager):
         await dialog_manager.start(FiniteStateMachine.StudentLevelGroup.choose_level, mode=StartMode.RESET_STACK)
 
-    try:
-        await dp.start_polling(bot, skip_updates=True)
-    except (KeyboardInterrupt, SystemExit):
-        print("Bot stopped")
+    await dp.start_polling(bot, skip_updates=True)
+    
 
 
 if __name__ == '__main__':
