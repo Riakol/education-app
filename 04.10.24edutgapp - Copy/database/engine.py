@@ -2,6 +2,7 @@ import asyncio
 import asyncpg
 
 from decouple import config
+from database import requests
 
 
 async def connect_to_db():

@@ -1,3 +1,9 @@
+from aiogram.types import Message, CallbackQuery
+from aiogram_dialog.widgets.kbd import Button, Back, Group
+from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog import (
+    Dialog, DialogManager, setup_dialogs, StartMode, Window,
+)
 from database import engine
 
 levels = {
@@ -8,24 +14,6 @@ levels = {
         "advanced": "Advanced",
         "ielts": "IELTS",
     }
-
-months_dict = {
-    1: "January",
-    2: "February",
-    3: "March",
-    4: "April",
-    5: "May",
-    6: "June",
-    7: "July",
-    8: "August",
-    9: "September",
-    10: "October",
-    11: "November",
-    12: "December"
-}
-
-async def get_num_by_month(dct, value):
-    return next((k for k, v in dct.items() if v == value), None)
 
 
 async def access_start():
@@ -216,30 +204,3 @@ async def attendance_data(group_details_id, month, year):
     """, group_details_id, month, year)
 
     return res
-
-
-async def get_month_year_from_attendace(group_details_id) -> dict:
-    conn = await engine.connect_to_db()
-    # date = await conn.fetch("""
-    # SELECT DISTINCT EXTRACT(MONTH FROM date) AS month, EXTRACT(YEAR FROM date) AS year
-    # FROM attendance
-    # ORDER BY year, month;
-    #     """)
-    date = await conn.fetch("""
-    SELECT DISTINCT EXTRACT(MONTH FROM a.date) AS month, EXTRACT(YEAR FROM a.date) AS year
-    FROM attendance a
-    JOIN student_details sd ON a.student_details_id = sd.id
-    WHERE sd.group_details_id = $1
-    ORDER BY year, month;
-    """, group_details_id)
-
-    month_year_dict = {
-        'month': [],
-        'year': []
-    }
-
-    for row in date:
-        month_year_dict['month'].append(int(row['month']))
-        month_year_dict['year'].append(int(row['year']))
-
-    return month_year_dict
