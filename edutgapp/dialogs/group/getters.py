@@ -1,0 +1,14 @@
+from aiogram_dialog import DialogManager 
+
+async def get_data_group(dialog_manager: DialogManager, **kwargs):
+    data = dialog_manager.dialog_data
+    start_data = dialog_manager.start_data
+    # selected_level = (
+    #         data.get("selected_level", None) or dialog_manager.start_data["selected_level"]
+    #     )
+    return {
+        "selected_level": start_data["selected_level"],
+        "group_buttons": data.get("group_buttons", []),
+        "group_selected": data.get("group_selected"),
+        "students_view": data.get("show_group_students"), 
+    }

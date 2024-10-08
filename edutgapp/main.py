@@ -1,7 +1,9 @@
 import logging
 import asyncio
 import FSM
-import winds 
+import dialogs.group.window
+import dialogs.level.window
+import dialogs.attendace.window
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
@@ -15,19 +17,23 @@ from aiogram_dialog import DialogManager
 from decouple import config
 
 
+
+
 storage = MemoryStorage()
 bot = Bot(config('TOKEN'))
 dp = Dispatcher(storage=storage)
 
 async def main():
 
-    dp.include_router(await winds.my_window())
+    dp.include_router(await dialogs.level.window.level_window())
+    dp.include_router(await dialogs.group.window.groups())
+    dp.include_router(await dialogs.attendace.window.attendance_window())
     setup_dialogs(dp)
 
 
     @dp.message(Command("start"))
     async def start(message: Message, dialog_manager: DialogManager):
-        await dialog_manager.start(FSM.StudentWorkflow.choose_level, mode=StartMode.RESET_STACK)
+        await dialog_manager.start(FSM.Level.choose_level, mode=StartMode.RESET_STACK)
     try:
         await dp.start_polling(bot, skip_updates=True)
     except (KeyboardInterrupt, SystemExit):
