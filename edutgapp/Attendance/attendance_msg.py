@@ -1,5 +1,4 @@
 def create_attendance_report(data, month_name, year):
-    # Создаем словарь для хранения посещаемости
     attendance_dict = {}
     
     for row in data:
@@ -12,10 +11,8 @@ def create_attendance_report(data, month_name, year):
         
         attendance_dict[name][day] = status
 
-    # Формируем сообщение
     message_lines = []
     
-    # Получаем уникальные дни из данных
     unique_days = sorted(set(int(row['day']) for row in data))
 
     for name in attendance_dict:
@@ -33,6 +30,5 @@ def create_attendance_report(data, month_name, year):
         attendance_row += ', '.join(attendance_days) + ';'
         message_lines.append(attendance_row)
 
-    # Объединяем все строки в одно сообщение
     message = f"{month_name} {year}:\n" + '\n'.join(message_lines)
     return message
