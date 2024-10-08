@@ -3,7 +3,6 @@ from database import requests
 
 
 async def create_attendance_excel(data, month_name, year, eng_level, group_number):
-    # Создаем словарь для хранения посещаемости
     attendance_dict = {}
     
     for row in data:
@@ -16,10 +15,8 @@ async def create_attendance_excel(data, month_name, year, eng_level, group_numbe
         
         attendance_dict[name][day] = status
 
-    # Получаем уникальные дни из данных
     unique_days = sorted({day for days in attendance_dict.values() for day in days.keys()})
 
-    # Создаем список для хранения строк DataFrame
     attendance_rows = []
 
     for name, days in attendance_dict.items():
@@ -27,25 +24,21 @@ async def create_attendance_excel(data, month_name, year, eng_level, group_numbe
         for day in unique_days:
             status = days.get(day, '')
             if status == 'present':
-                attendance_row[day] = '✅'  # Знак галочки для присутствия
+                attendance_row[day] = '✅'  
             elif status == 'absent':
-                attendance_row[day] = '❌'  # Знак крестика для отсутствия
+                attendance_row[day] = '❌' 
             else:
                 attendance_row[day] = ''    # Пустое значение для отсутствующих дней
         
         attendance_rows.append(attendance_row)
 
-    # Создаем DataFrame из списка строк
     attendance_df = pd.DataFrame(attendance_rows)
 
-    # Создаем DataFrame для заголовка уровня и группы
     header_df = pd.DataFrame([[f"{eng_level}: {group_number}"]])
 
-    # Сохраняем DataFrame в Excel
     file_name = f"attendance_{month_name}_{year}.xlsx"
     
     with pd.ExcelWriter(file_name, engine='openpyxl') as writer:
-        # Записываем заголовок уровня и группы в первую строку
         header_df.to_excel(writer, index=False, header=False, sheet_name=f"{requests.months_dict[month_name]} {year}")
         
         # Записываем основной DataFrame, начиная со второй строки
