@@ -19,5 +19,8 @@ class Attendance(StatesGroup):
     attendance_month = State()
 
 class Student(StatesGroup):
-    student_name = State()
+    editing_student_menu = State() 
     remove_student = State()
+    rename_student = State()
+    update_student_name = State()
+

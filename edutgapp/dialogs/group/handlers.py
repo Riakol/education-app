@@ -1,3 +1,5 @@
+import FSM
+
 from datetime import datetime
 from aiogram.types import CallbackQuery
 from aiogram_dialog.widgets.kbd import Button
@@ -7,7 +9,6 @@ from aiogram_dialog import (
 )
 from aiogram_dialog.widgets.kbd import ManagedCheckbox
 from database import engine, requests
-import FSM
 from typing import Any
 
 
@@ -18,12 +19,15 @@ async def level_menu(callback: CallbackQuery, button: Button, manager: DialogMan
 async def check_saved(event: ChatEvent, checkbox: ManagedCheckbox,
                         manager: DialogManager):
         
+
     current_date = datetime.now().date()
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
     group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
     
     group_details_id = await requests.get_group_details_id(eng_lvl_id, group_id)
-    all_students_group = await requests.get_students_from_group(group_details_id)
+    
+    student_names = await requests.get_students_from_group(group_details_id)
+    all_students_group = [name for name, id in student_names]
 
     widget = manager.dialog().find("student_check").get_checked(manager)
 
@@ -67,8 +71,9 @@ async def create_group(callback: CallbackQuery, button: Button, manager: DialogM
     await manager.switch_to(FSM.Group.choose_group)
 
 
-async def delete_group_clicked(callback: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.switch_to(FSM.Group.delete_group)
+#DELETE
+# async def delete_group_clicked(callback: CallbackQuery, button: Button, manager: DialogManager):
+#     await manager.switch_to(FSM.Group.delete_group)
 
 
 async def delete_group(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -107,13 +112,15 @@ async def get_group_buttons(selected_level):
 
     if groups:
         group_buttons = [
-            Button(Const(f"Group: {group_id['id']}"), id=f"{group_id['group_number']}", on_click=group_selected)
+            # Button(text=Const(f"Group: {group_id['id']}"), id=f"{group_id['group_number']}", on_click=group_selected)
+            # for group_id in groups
+            (group_id['group_number'], Button(text=Const(f"Group: {group_id['id']}"), id=f"{group_id['group_number']}", on_click=group_selected))
             for group_id in groups
         ]
     else:
         group_buttons = [] 
 
-    return group_buttons 
+    return group_buttons
 
 
 async def get_groups_clicked(callback: CallbackQuery, button: Button, manager: DialogManager):
@@ -141,19 +148,32 @@ async def group_selected(callback: CallbackQuery, button: Button, manager: Dialo
     await manager.next()
 
 
-async def remove_student_from_group(callback: CallbackQuery, button: Button, manager: DialogManager):
-    print('x')
-#     await manager.switch_to(StudentWorkflow.remove_student)
- 
-# async def remove_student(callback: CallbackQuery, button: Button, manager: DialogManager):
-#     await manager.switch_to(StudentWorkflow.remove_student)
+async def editing_student(callback: CallbackQuery, button: Button, manager: DialogManager):
+    eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
+    group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    
+    group_details_id = await requests.get_group_details_id(eng_lvl_id, group_id)
+    
+    students = await requests.get_students_from_group(group_details_id)
+
+    if students:
+        student_buttons = [
+            (name, Button(Const(f"{name}"), id=f"id_{student_id}"))
+            for name, student_id in students
+        ]
+    else:
+        student_buttons = []
+
+
+    await manager.start(FSM.Student.editing_student_menu, data={"selected_level": manager.start_data['selected_level'],
+                                                         "group_selected": manager.dialog_data.get('group_selected'),
+                                                         "student_buttons": student_buttons})
+
 
 async def add_student(callback: CallbackQuery, button: Button, manager: DialogManager):
 
     student_name = manager.find("student_name").get_value()
     if student_name:
-        print(f"Student name entered: {student_name}")
-
         await requests.add_student(student_name)
         student_id = await requests.get_student_id(student_name)
         eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
@@ -161,9 +181,6 @@ async def add_student(callback: CallbackQuery, button: Button, manager: DialogMa
 
         await requests.add_student_to_group(student_id, await requests.get_group_details_id(eng_lvl_id, group_id))
 
-
-    else:
-        print("No student name entered.")
     
     # await manager.next()
     
@@ -171,9 +188,12 @@ async def add_student(callback: CallbackQuery, button: Button, manager: DialogMa
 async def show_students(callback: CallbackQuery, button: Button, manager: DialogManager):
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
     group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    
     students = await requests.get_students_from_group(await requests.get_group_details_id(eng_lvl_id, group_id))
+    student_names = [name for name, id in students]
+ 
 
-    await manager.update({"show_group_students": students})
+    await manager.update({"show_group_students": student_names})
     await manager.switch_to(FSM.Group.student_group_view)
 
 

@@ -10,5 +10,5 @@ async def get_data_group(dialog_manager: DialogManager, **kwargs):
         "selected_level": start_data["selected_level"],
         "group_buttons": data.get("group_buttons", []),
         "group_selected": data.get("group_selected"),
-        "students_view": data.get("show_group_students"), 
+        "show_group_students": data.get("show_group_students"), 
     }

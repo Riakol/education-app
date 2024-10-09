@@ -4,7 +4,7 @@ from aiogram_dialog.widgets.kbd import (
     Back, Button, Select, SwitchTo, 
     Group, Multiselect
     )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Jinja
 from aiogram_dialog import (
     Dialog, Window
 )
@@ -43,9 +43,9 @@ async def groups():
     Window(
         Format("{selected_level}: Select a group ⤵️"),
         Select(
-            Format("{item.widget_id}"),
+            Format("{item[0]}"),
             id="s_groups",
-            item_id_getter=lambda x: x.widget_id,
+            item_id_getter=lambda x: x[1].widget_id,
             items="group_buttons",
             on_click=action.group_selected,
         ),
@@ -55,8 +55,8 @@ async def groups():
     Window(
         Format("{selected_level}: {group_selected} ⤵️"),
         Group(
-            Button(Const("❌ Remove a student"), 
-                id="remove_student", on_click=action.remove_student_from_group),
+            Button(Const("🛠️ Editing"), 
+                id="editing", on_click=action.editing_student),
             Button(Const("✅ Add a student"), 
                 id="add_student", on_click=
                 SwitchTo(text=Const("goto_input_name"), id="switchto_input_name", state=FSM.Group.input_student_name)
@@ -66,12 +66,14 @@ async def groups():
         Group(
             Button(Const("🗓️ Attendance"), 
                 id="view_attendance", on_click=action.show_attendance),
-            Button(Const("✏️ Mark those present"), 
+            Button(Const("✏️ mark attendance"), 
                 id="viewgroup", on_click=action.show_students),
             width=2,
         ),
         Button(Const("⛔ Delete group"), 
-                id="delgroup", on_click=action.delete_group_clicked),       
+                id="delgroup", on_click=SwitchTo(text=Const("Delete group"), 
+                                                 id="goto_delete_group", 
+                                                 state=FSM.Group.delete_group)),       
         Back(text=Const("Back")),
         state=FSM.Group.inside_group,
     ),
@@ -115,7 +117,7 @@ async def groups():
                 Format("{item}"),
                 id="student_check",
                 item_id_getter=str,
-                items="students_view",
+                items="show_group_students",
             ),
             width=1,
         ),

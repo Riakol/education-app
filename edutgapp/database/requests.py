@@ -72,9 +72,6 @@ async def get_groups_for_level(selected_level):
     """ Получаем список групп для заданного уровня """
 
     conn = await engine.connect_to_db()
-    # groups = await conn.fetch("""
-    #     SELECT group_id FROM group_details WHERE eng_lvl_id = $1
-    # """, selected_level)
     groups = await conn.fetch("""
         SELECT g.id, g.group_number 
         FROM group_details gd
@@ -83,31 +80,27 @@ async def get_groups_for_level(selected_level):
     """, selected_level)
 
     if groups:
-        # return [record['group_id'] for record in groups]
         sorted_groups = sorted(groups, key=lambda x: x['group_number'])
         return sorted_groups
-        # return groups
-    
+
+# async def get_teacher_id(tg_id):
+#     conn = await engine.connect_to_db()
+
+#     teacher_id = await conn.fetchval("""
+#         SELECT id FROM teacher WHERE tg_id = $1
+#     """, tg_id)
+
+#     return teacher_id
 
 
-async def get_teacher_id(tg_id):
-    conn = await engine.connect_to_db()
+# async def get_lvl_from_current_pos():
+#     conn = await engine.connect_to_db()
 
-    teacher_id = await conn.fetchval("""
-        SELECT id FROM teacher WHERE tg_id = $1
-    """, tg_id)
+#     lvl_id = await conn.fetchval("""
+#         SELECT lvl_id FROM current_position WHERE teacher_id = 1
+#     """)
 
-    return teacher_id
-
-
-async def get_lvl_from_current_pos():
-    conn = await engine.connect_to_db()
-
-    lvl_id = await conn.fetchval("""
-        SELECT lvl_id FROM current_position WHERE teacher_id = 1
-    """)
-
-    return lvl_id
+#     return lvl_id
 
 async def get_lvl_id(selected_level):
     conn = await engine.connect_to_db()
@@ -127,14 +120,14 @@ async def get_group_number(group_id):
     return group_number_not_id
 
 
-async def insert_lvl_teacher_current_pos(lvl_id, teacher_id):
-    conn = await engine.connect_to_db()
-    query = await conn.execute("""
-    INSERT INTO current_position (lvl_id, teacher_id)
-    VALUES ($1, $2)
-    ON CONFLICT (teacher_id) DO UPDATE
-    SET lvl_id = EXCLUDED.lvl_id;
-    """, lvl_id, teacher_id)
+# async def insert_lvl_teacher_current_pos(lvl_id, teacher_id):
+#     conn = await engine.connect_to_db()
+#     query = await conn.execute("""
+#     INSERT INTO current_position (lvl_id, teacher_id)
+#     VALUES ($1, $2)
+#     ON CONFLICT (teacher_id) DO UPDATE
+#     SET lvl_id = EXCLUDED.lvl_id;
+#     """, lvl_id, teacher_id)
 
 
 async def add_student(student_name):
@@ -149,6 +142,18 @@ async def get_student_id(student_name):
         return await conn.fetchval("""
             SELECT id FROM student WHERE name = $1""", 
             student_name)
+    except Exception as e:
+        print(f"Error fetching student ID: {e}")
+
+async def get_student_id_from_group(group_details_id):
+    try:
+        conn = await engine.connect_to_db()
+        return await conn.fetchval('''
+        SELECT sd.student_id
+        FROM student_details sd
+        JOIN group_details gd ON sd.group_details_id = gd.id
+        WHERE gd.id = $1
+    ''', group_details_id)
     except Exception as e:
         print(f"Error fetching student ID: {e}")
 
@@ -172,13 +177,13 @@ async def add_student_to_group(student_id, group_details_id):
 async def get_students_from_group(group_details_id):
     conn = await engine.connect_to_db()
     get_students = await conn.fetch("""
-            SELECT s.name 
+            SELECT s.name, s.id 
             FROM student s
             JOIN student_details sd ON s.id = sd.student_id
             WHERE sd.group_details_id = $1;
         """, group_details_id)
         
-    return [record['name'] for record in get_students]
+    return [(record['name'], record['id']) for record in get_students]
 
 async def get_student_details_id(student_id, group_details_id):
     conn = await engine.connect_to_db()
@@ -220,11 +225,7 @@ async def attendance_data(group_details_id, month, year):
 
 async def get_month_year_from_attendace(group_details_id) -> dict:
     conn = await engine.connect_to_db()
-    # date = await conn.fetch("""
-    # SELECT DISTINCT EXTRACT(MONTH FROM date) AS month, EXTRACT(YEAR FROM date) AS year
-    # FROM attendance
-    # ORDER BY year, month;
-    #     """)
+
     date = await conn.fetch("""
     SELECT DISTINCT EXTRACT(MONTH FROM a.date) AS month, EXTRACT(YEAR FROM a.date) AS year
     FROM attendance a
@@ -243,3 +244,24 @@ async def get_month_year_from_attendace(group_details_id) -> dict:
         month_year_dict['year'].append(int(row['year']))
 
     return month_year_dict
+
+async def update_student_name(new_name, student_id):
+    conn = await engine.connect_to_db()
+    await conn.execute("""
+            UPDATE student
+            SET name = $1
+            WHERE id = $2;
+        """, new_name, student_id)
+ 
+async def remove_student(student_id):
+    conn = await engine.connect_to_db()
+    
+    await conn.execute("""
+            DELETE FROM student_details
+            WHERE student_id = $1;
+        """, student_id)
+
+    await conn.execute("""
+            DELETE FROM student
+            WHERE id = $1;
+        """, student_id)
