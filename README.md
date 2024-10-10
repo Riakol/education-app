@@ -1,13 +1,15 @@
 # Student Attendance Management Bot
 
-This is a Telegram bot designed for managing student attendance. It provides a user-friendly interface for tracking attendance and managing student information.
+This Telegram bot is designed to streamline the management of student attendance. It offers a user-friendly interface for efficiently tracking attendance and managing student information. By simplifying the attendance management process, this bot enables educators to easily monitor attendance records and generate reports as needed.
 
 ## Features
 
 - **Group Creation**: Create groups based on language proficiency levels.
 - **Student Management**: Add, remove, and update student information easily.
 - **Attendance Tracking**: Mark student attendance efficiently.
-- **Attendance Export**: Export group attendance records in Excel format.
+- **Attendance Export**:
+     - Export group attendance records in Excel format for all time.
+     - Select a specific date range to export attendance records, allowing for more tailored reporting.
 - **Group Deletion**: Remove groups when they are no longer needed.
 
 ## Libraries Used
@@ -27,7 +29,11 @@ This is a Telegram bot designed for managing student attendance. It provides a u
 
 ![image](https://github.com/user-attachments/assets/b14c0cf9-e61c-4a54-b092-a20e9a2097db)
 
-![image](https://github.com/user-attachments/assets/36ce5929-19b7-44c5-94fc-c2d2eb224af6)
+![image](https://github.com/user-attachments/assets/fb501fd7-f5f3-45aa-a0f6-cb2dffef10b4)
+
+![image](https://github.com/user-attachments/assets/2e6ba4b5-32d6-4d96-a136-5c09222c8fa8)
+
+
 
 
 
