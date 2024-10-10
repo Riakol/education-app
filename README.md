@@ -4,13 +4,17 @@ This Telegram bot is designed to streamline the management of student attendance
 
 ## Features
 
-- **Group Creation**: Create groups based on language proficiency levels.
-- **Student Management**: Add, remove, and update student information easily.
+- **Groups**:
+     - Create groups based on language proficiency levels
+     - Remove groups when they are no longer needed
+- **Student Management**:
+     - Add,
+     - remove,
+     - update student information easily.
 - **Attendance Tracking**: Mark student attendance efficiently.
 - **Attendance Export**:
      - Export group attendance records in Excel format for all time.
      - Select a specific date range to export attendance records, allowing for more tailored reporting.
-- **Group Deletion**: Remove groups when they are no longer needed.
 
 ## Libraries Used
 
