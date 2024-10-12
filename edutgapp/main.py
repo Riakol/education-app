@@ -18,8 +18,6 @@ from aiogram_dialog import DialogManager
 from decouple import config
 
 
-
-
 storage = MemoryStorage()
 bot = Bot(config('TOKEN'))
 dp = Dispatcher(storage=storage)

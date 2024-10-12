@@ -74,7 +74,7 @@ async def groups():
                 id="delgroup", on_click=SwitchTo(text=Const("Delete group"), 
                                                  id="goto_delete_group", 
                                                  state=FSM.Group.delete_group)),       
-        Back(text=Const("Back")),
+        Back(text=Const("⬅️ Back")),
         state=FSM.Group.inside_group,
     ),
     Window(
@@ -86,19 +86,6 @@ async def groups():
         back_to_inside_group_menu,
         state=FSM.Group.input_student_name,
     ),
-
-
-    # Window(
-    #     Format("{selected_level}: {group_selected}"),
-    #     Format("Are You Sure?"),
-    #     Group(
-    #         Button(Const("remove student ❌"), id="remove_student", on_click=action.delete_group),
-    #         back_to_inside_group_menu,
-    #         width=2,  
-    #     ),
-    #     back_to_inside_group_menu,     
-    #     state=FSM.StudentWorkflow.remove_student,
-    # ),
     Window(
         Format("{selected_level}: {group_selected}"),
         Format("Are You Sure?"),
@@ -113,8 +100,8 @@ async def groups():
         Format("{selected_level}: {group_selected} ⤵️"),
         Group(
             Multiselect(
-                Format("✅ {item}"),
-                Format("{item}"),
+                Format("✅ {item[0]}"),
+                Format("{item[0]}"),
                 id="student_check",
                 item_id_getter=str,
                 items="show_group_students",

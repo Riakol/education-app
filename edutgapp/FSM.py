@@ -14,9 +14,11 @@ class Group(StatesGroup):
 
 class Attendance(StatesGroup):
     attendance = State()
-    attendance_by_msg = State()
+    custom_range = State()
     attendance_year = State()
     attendance_month = State()
+    attendance_day_from = State()
+    attendance_day_to = State()
 
 class Student(StatesGroup):
     editing_student_menu = State() 

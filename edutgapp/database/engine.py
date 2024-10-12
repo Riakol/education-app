@@ -37,5 +37,4 @@ async def student_levels():
     return temp
 
 
-
 asyncio.run(run_queries())
