@@ -64,9 +64,7 @@ async def other_check_saved(event: ChatEvent, checkbox: ManagedCheckbox,
         
     widget = manager.dialog().find("student_check").get_checked(manager)
     await manager.update({"other_check_saved": widget})
-
-    # await event.answer("✅ The data has been saved successfully!")
-    
+ 
     await manager.switch_to(FSM.Group.input_absence_reason)
 
 
@@ -123,8 +121,6 @@ async def get_group_buttons(selected_level):
         group_buttons = [
             (group_id['group_number'], Button(text=Const(f"Group: {group_id['group_number']}"), id=f"{group_id['id']}", on_click=group_selected))
             for group_id in groups
-            # (group_id['group_number'], Button(text=Const(f"Group: {group_id['id']}"), id=f"{group_id['group_number']}", on_click=group_selected))
-            # for group_id in groups
         ]
     else:
         group_buttons = [] 

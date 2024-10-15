@@ -54,8 +54,6 @@ async def student_transfer_selected(callback: CallbackQuery, button: Button, man
     await manager.update({"transfer_student_id_selected": int(item_id.split('_')[1])})
     await manager.switch_to(FSM.Student.transfer_student_level)
 
-    # await callback.answer(f"✅ the student has been successfully removed!")
-
 
 async def level_button_clicked(callback: CallbackQuery, button: Button, manager: DialogManager):
     selected_level = button.widget_id
@@ -79,7 +77,6 @@ async def transfer_group_selected(callback: CallbackQuery, button: Button, manag
     student_id = manager.dialog_data.get("transfer_student_id_selected")
     
     eng_lvl_id = await requests.get_lvl_id(manager.start_data["selected_level"])
-    # group_id = manager.dialog_data.get("group_selected")
     group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
     student_details_id = await requests.get_student_details_id(student_id, gdi)
@@ -91,19 +88,17 @@ async def transfer_group_selected(callback: CallbackQuery, button: Button, manag
                                           """, manager.dialog_data.get("transfer_level_id"),
                                           int(manager.dialog_data.get("transfer_group_selected")))
     
-     # Извлекаем id новой группы
+    
     if new_transfer_group:
-        new_transfer_group_id = new_transfer_group[0]['id']  # Извлекаем id из первой записи
+        new_transfer_group_id = new_transfer_group[0]['id']
     else:
         await callback.answer("❌ New transfer group not found.")
         return
 
-    # Получаем имя студента
     student_name = await conn.fetchval("""
         SELECT name FROM student WHERE id = $1;
     """, student_id)
 
-    # Проверяем, есть ли студент с таким же именем в новой группе
     existing_student = await conn.fetch("""
         SELECT sd.id FROM student_details sd
         JOIN student s ON sd.student_id = s.id
@@ -111,7 +106,7 @@ async def transfer_group_selected(callback: CallbackQuery, button: Button, manag
     """, new_transfer_group_id, student_name)
 
     if existing_student:
-        await callback.answer(f"❌ A student named '{student_name}' already exists in the new group. Please rename the student.")
+        await callback.message.answer(f"❌ A student named '{student_name}' already exists in the new group. Please rename the student.")
         await manager.switch_to(FSM.Student.editing_student_menu)
         return
 
@@ -125,13 +120,11 @@ async def transfer_group_selected(callback: CallbackQuery, button: Button, manag
             VALUES ($1, $2, $3, $4, $5, $6);
         """, student_id, eng_lvl_id, group_id, record['date'], record['status'], record.get('absence_reason', None))
 
-    # Удаляем записи из таблицы attendance после копирования
     await conn.execute("""
         DELETE FROM attendance 
         WHERE student_details_id = $1;
     """, student_details_id)
 
-    # Обновляем группу и уровень языка
     await conn.execute("""
         UPDATE student_details 
         SET group_details_id = $1 

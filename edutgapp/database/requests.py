@@ -103,10 +103,6 @@ async def get_group_number(group_id):
     return group_number_not_id
 
 async def add_student(student_name):
-    # conn = await engine.connect_to_db()
-    # await conn.execute("""
-    #         INSERT INTO student (name) VALUES ($1)
-    #     """, student_name)
     conn = await engine.connect_to_db()
     result = await conn.fetchrow("""
         INSERT INTO student (name) VALUES ($1) RETURNING id;
@@ -170,15 +166,6 @@ async def get_student_details_id(student_id, group_details_id):
 
     return student_details_id
 
-
-# async def add_student_attendance(student_details_id, date, status="absent"):
-#     conn = await engine.connect_to_db()
-#     await conn.execute("""
-#             INSERT INTO attendance (student_details_id, date, status) 
-#             VALUES ($1, $2, $3)
-#             ON CONFLICT (student_details_id, date) 
-#             DO UPDATE SET status = EXCLUDED.status
-#         """, student_details_id, date, status)
 
 async def add_student_attendance(student_details_id, date, status="absent"):
     conn = await engine.connect_to_db()
