@@ -8,13 +8,22 @@ This Telegram bot is designed to streamline the management of student attendance
      - Create groups based on language proficiency levels
      - Remove groups when they are no longer needed
 - **Student Management**:
-     - Add,
-     - remove,
-     - update student information easily.
-- **Attendance Tracking**: Mark student attendance efficiently.
+     - Easily add, remove, and update student information. 
+- **Attendance Tracking**:
+     - Mark student attendance efficiently.
 - **Attendance Export**:
      - Export group attendance records in Excel format for all time.
      - Select a specific date range to export attendance records, allowing for more tailored reporting.
+
+UPD
+- **Student Transfers Between Groups**:
+     - The ability to transfer students between different groups has been introduced, allowing for more flexible management of the educational process and better adaptation to the needs of each student.
+- **Respectful Absence Reasons**:
+     - A feature has been added that allows for the specification of a respectful reason for a student's absence. This will help in better tracking the reasons for absences and maintaining communication with parents or guardians.
+- **New Tab in Excel Export**:
+     - A new "Transfer" sheet has been added to the Excel export, which details the previous groups of each student and their attendance in those groups. This will enable a more detailed analysis of students' attendance and performance trends.
+
+
 
 ## Libraries Used
 
