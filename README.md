@@ -31,7 +31,7 @@ UPD
 - aiogram version 3.13.0
 - pandas for data manipulation and export
 
-## Beta Preview
+## Preview
 /start
 
 ![image](https://github.com/user-attachments/assets/6482cff1-c6a2-408c-884a-099446d1784e)
