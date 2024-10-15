@@ -38,9 +38,19 @@ UPD
 
 ![image](https://github.com/user-attachments/assets/733c504b-9871-4fff-bbe0-a2f54da1490b)
 
-![image](https://github.com/user-attachments/assets/63ad80a4-6d9a-4c91-9a0b-adb5130a7ea2)
+![image](https://github.com/user-attachments/assets/9cacae19-280e-4145-846b-ac6e07c3462b)
 
+### Editing
+![image](https://github.com/user-attachments/assets/cc2380a3-be51-4fca-86a2-e273a36a31f6)
+
+### mark Attendance
+![image](https://github.com/user-attachments/assets/862bd0df-acdf-47bf-802a-ab93c16d8bb5)
+
+### mark
 ![image](https://github.com/user-attachments/assets/b14c0cf9-e61c-4a54-b092-a20e9a2097db)
+
+### View Attendance
+![image](https://github.com/user-attachments/assets/99fbfacc-d46b-46fc-bd77-412d539b3df0)
 
 ![image](https://github.com/user-attachments/assets/fb501fd7-f5f3-45aa-a0f6-cb2dffef10b4)
 
