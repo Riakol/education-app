@@ -11,6 +11,9 @@ class Group(StatesGroup):
     create_group = State()
     delete_group = State()
     input_student_name = State()
+    mark_group_attendance = State()
+    absence_student_selected = State()
+    input_absence_reason = State()
 
 class Attendance(StatesGroup):
     attendance = State()
@@ -27,4 +30,7 @@ class Student(StatesGroup):
     remove_student = State()
     rename_student = State()
     update_student_name = State()
+    transfer_student = State()
+    transfer_student_level = State()
+    transfer_student_group = State()
 

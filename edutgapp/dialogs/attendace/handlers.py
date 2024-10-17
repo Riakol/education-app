@@ -196,14 +196,12 @@ async def excel_alltime(callback: CallbackQuery, button: Button, manager: Dialog
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
     group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
-
-    
     eng_lvl = manager.start_data['selected_level']
 
     data = await requests.attendance_alltime_data(gdi)
-   
+    transfer_data, student_name_dict = await get_student_transfer_info_from_group(gdi)
     
-    file_path = await attendance_excel.create_attendance_excel(data, eng_lvl, group_id)
+    file_path = await attendance_excel.create_attendance_excel(data, eng_lvl, group_id, transfer_data, student_name_dict)
     if os.path.exists(file_path):
         document = FSInputFile(file_path)
         await callback.answer('Sending a report...')
@@ -217,7 +215,6 @@ async def excel_alltime(callback: CallbackQuery, button: Button, manager: Dialog
 
 async def excel_custom_range(callback: CallbackQuery, button: Button, manager: DialogManager):
     start_date = datetime.strptime(f"{manager.dialog_data.get('starting_year')}-{manager.dialog_data.get('starting_month')}-{manager.dialog_data.get('starting_day')}", "%Y-%m-%d")
-
     end_date = datetime.strptime(f"{manager.dialog_data.get('end_year')}-{manager.dialog_data.get('end_month')}-{manager.dialog_data.get('end_day')}", "%Y-%m-%d")
 
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
@@ -227,9 +224,11 @@ async def excel_custom_range(callback: CallbackQuery, button: Button, manager: D
     eng_lvl = manager.start_data['selected_level']
 
     data = await requests.attendance_custom(gdi, start_date, end_date)
-   
-  
-    file_path = await attendance_excel.create_attendance_excel(data, eng_lvl, group_id)
+    transfer_data, student_name_dict = await get_student_transfer_info_from_group(gdi, start_date, end_date)
+
+
+    
+    file_path = await attendance_excel.create_attendance_excel(data, eng_lvl, group_id, transfer_data, student_name_dict, start_date=start_date, end_date=end_date)
     if os.path.exists(file_path):
         document = FSInputFile(file_path)
         await callback.answer('Sending a report...')
@@ -241,6 +240,19 @@ async def excel_custom_range(callback: CallbackQuery, button: Button, manager: D
             print(f"Error deleting file: {e}")
     
     await manager.done()
+
+
+async def get_student_transfer_info_from_group(group_details_id, start_date=None, end_date=None):
+    students_name_and_ids = await requests.get_students_from_group(group_details_id)
+    students_ids = [student_id for _, student_id in students_name_and_ids]
+    
+    if start_date and end_date:
+        transfer_data = await requests.get_transfer_info_custom(students_ids, start_date, end_date)
+    else:
+        transfer_data = await requests.get_transfer_info(students_ids)
+    student_name_dict = {student_id: name for name, student_id in students_name_and_ids}
+    
+    return transfer_data, student_name_dict
 
 
 async def pass_starting_year(callback: CallbackQuery, button: Button, manager: DialogManager):

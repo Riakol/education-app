@@ -15,19 +15,13 @@ from dialogs.attendace import handlers as action
 
 
 async def attendance_window():
-    # choose_year = SwitchTo(text=Const("⬅️ Back"), 
-    #                 id="goto_year_btn", state=FSM.Attendance.attendance_year)
-    # choose_month = SwitchTo(text=Const("⬅️ Back"), id="goto_choose_btn", state=FSM.Attendance.attendance_month)
-    # back_to_attendance_year =  SwitchTo(text=Const("⬅️ Back"), 
-    #                     id="back_to_attendance_year", state=FSM.Attendance.attendance_month)
-    # back_to_custom_range =  SwitchTo(text=Const("⬅️ Back"), id="back_to_custom_range", state=FSM.Attendance.custom_range)
-    
+ 
     dialog = Dialog(
         Window(
             Format("Select an option ⤵️"),
             Group(
-                Button(Const("Excel"), id="attendance_excel", on_click=action.excel_alltime),
-                Button(Const("Custom range"), id="custom_range", on_click=action.pass_starting_year),  
+                Button(Const("📋 All Times"), id="attendance_excel", on_click=action.excel_alltime),
+                Button(Const("🎯 Custom Range"), id="custom_range", on_click=action.pass_starting_year),  
                 width=2,
             ),
             Cancel(text=Const("⬅️ Back")),

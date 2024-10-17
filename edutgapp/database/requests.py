@@ -1,3 +1,4 @@
+import logging
 from database import engine
 
 levels = {
@@ -170,14 +171,60 @@ async def get_student_details_id(student_id, group_details_id):
     return student_details_id
 
 
+# async def add_student_attendance(student_details_id, date, status="absent"):
+#     conn = await engine.connect_to_db()
+#     await conn.execute("""
+#             INSERT INTO attendance (student_details_id, date, status) 
+#             VALUES ($1, $2, $3)
+#             ON CONFLICT (student_details_id, date) 
+#             DO UPDATE SET status = EXCLUDED.status
+#         """, student_details_id, date, status)
+
 async def add_student_attendance(student_details_id, date, status="absent"):
     conn = await engine.connect_to_db()
     await conn.execute("""
             INSERT INTO attendance (student_details_id, date, status) 
             VALUES ($1, $2, $3)
             ON CONFLICT (student_details_id, date) 
-            DO UPDATE SET status = EXCLUDED.status
+            DO UPDATE SET 
+                status = EXCLUDED.status,
+                absence_reason = CASE 
+                    WHEN EXCLUDED.status IN ('absent', 'present') THEN NULL
+                    WHEN EXCLUDED.status = 'other' THEN NULL
+                    ELSE attendance.absence_reason  -- Указываем, что это поле из таблицы attendance
+                END
         """, student_details_id, date, status)
+
+async def add_student_absence_reason(student_details_id, date, absence_reason=None):
+    conn = await engine.connect_to_db()
+    
+    # Проверяем, существует ли запись с текущей датой
+    existing_record = await conn.fetchrow("""
+        SELECT status, absence_reason FROM attendance 
+        WHERE student_details_id = $1 AND date = $2
+    """, student_details_id, date)
+
+    if existing_record:
+        # Если статус уже установлен, очищаем его
+        if existing_record['status'] is not None:
+            await conn.execute("""
+                UPDATE attendance 
+                SET status = 'other'  -- Устанавливаем значение по умолчанию
+                WHERE student_details_id = $1 AND date = $2
+            """, student_details_id, date)
+
+        # Обновляем absence_reason
+        await conn.execute("""
+            UPDATE attendance 
+            SET absence_reason = $1 
+            WHERE student_details_id = $2 AND date = $3
+        """, absence_reason, student_details_id, date)
+    else:
+        # Если записи нет, вставляем новую с absence_reason
+        await conn.execute("""
+            INSERT INTO attendance (student_details_id, date, status, absence_reason) 
+            VALUES ($1, $2, 'other', $3)  -- Устанавливаем значение по умолчанию
+        """, student_details_id, date, absence_reason)
 
 
 async def attendance_data(group_details_id, month, year):
@@ -205,10 +252,12 @@ async def attendance_data(group_details_id, month, year):
 async def attendance_custom(group_details_id, start_date, end_date):
     conn = await engine.connect_to_db()
     res = await conn.fetch("""
-    SELECT s.name AS student_name, 
+    SELECT s.name AS student_name,
+            sd.student_id, 
            a.date,  -- Добавлено поле date
            EXTRACT(DAY FROM a.date) AS day, 
-           a.status 
+           a.status,
+           a.absence_reason 
     FROM attendance a
     JOIN student_details sd ON a.student_details_id = sd.id
     JOIN student s ON sd.student_id = s.id
@@ -224,10 +273,12 @@ async def attendance_custom(group_details_id, start_date, end_date):
 async def attendance_alltime_data(group_details_id):
     conn = await engine.connect_to_db()
     res = await conn.fetch("""
-    SELECT s.name AS student_name, 
+    SELECT s.name AS student_name,
+            sd.student_id, 
            EXTRACT(DAY FROM a.date) AS day, 
            a.status, 
-           a.date
+           a.date,
+           a.absence_reason
     FROM attendance a
     JOIN student_details sd ON a.student_details_id = sd.id
     JOIN student s ON sd.student_id = s.id
@@ -295,3 +346,36 @@ async def remove_student(student_id):
             DELETE FROM student
             WHERE id = $1;
         """, student_id)
+    
+
+async def get_transfer_info(student_ids):
+    # SQL-запрос для получения данных о переводе студентов, включая уровень и группу
+    conn = await engine.connect_to_db()
+    transfer_data = await conn.fetch("""
+    SELECT s.id AS student_id, l.eng_lvl, g.group_number, sah.date, sah.status, sah.absence_reason
+    FROM student_attendance_history sah
+    JOIN student s ON sah.student_id = s.id  
+    JOIN level l ON sah.eng_lvl = l.id
+    JOIN "group" g ON sah.group_number = g.id
+    WHERE sah.student_id = ANY($1)
+    ORDER BY sah.date;
+    """, student_ids)
+
+    return transfer_data
+
+
+async def get_transfer_info_custom(student_ids, start_date, end_date):
+    # SQL-запрос для получения данных о переводе студентов, включая уровень и группу
+    conn = await engine.connect_to_db()
+    transfer_data = await conn.fetch("""
+    SELECT s.id AS student_id, l.eng_lvl, g.group_number, sah.date, sah.status, sah.absence_reason
+    FROM student_attendance_history sah
+    JOIN student s ON sah.student_id = s.id 
+    JOIN level l ON sah.eng_lvl = l.id
+    JOIN "group" g ON sah.group_number = g.id
+    WHERE sah.student_id = ANY($1)
+      AND sah.date BETWEEN $2 AND $3
+    ORDER BY sah.date;
+    """, student_ids, start_date, end_date)
+
+    return transfer_data
