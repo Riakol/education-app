@@ -48,7 +48,8 @@ async def starting_year_button_clicked(callback: CallbackQuery, button: Button, 
     await manager.update({"starting_year": item_id})
 
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
+    group_id = manager.start_data['group_selected_id']
+    # group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
 
     months = await requests.get_months_by_year(gdi, item_id)
@@ -87,7 +88,8 @@ async def starting_day_button_clicked(callback: CallbackQuery, button: Button, m
     await manager.update({"starting_day": item_id})
 
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
+    group_id = manager.start_data['group_selected_id']
+    # group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
     
     month_year_data = await requests.get_month_year_from_attendace(gdi)
@@ -109,7 +111,8 @@ async def end_year_button_clicked(callback: CallbackQuery, button: Button, manag
     await manager.update({"end_year": item_id})
 
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
+    group_id = manager.start_data['group_selected_id']
+    # group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
 
     months = await requests.get_months_by_year(gdi, item_id)
@@ -194,18 +197,19 @@ async def day_button_clicked(callback: CallbackQuery, button: Button, manager: D
 async def excel_alltime(callback: CallbackQuery, button: Button, manager: DialogManager):
     
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
+    group_id = manager.start_data['group_selected_id']
+    group_name = manager.start_data['group_selected_name']
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
     eng_lvl = manager.start_data['selected_level']
 
     data = await requests.attendance_alltime_data(gdi)
     transfer_data, student_name_dict = await get_student_transfer_info_from_group(gdi)
     
-    file_path = await attendance_excel.create_attendance_excel(data, eng_lvl, group_id, transfer_data, student_name_dict)
+    file_path = await attendance_excel.create_attendance_excel(data, eng_lvl, group_name, transfer_data, student_name_dict)
     if os.path.exists(file_path):
         document = FSInputFile(file_path)
         await callback.answer('Sending a report...')
-        await callback.bot.send_document(chat_id=callback.message.chat.id, document=document, caption=f"{eng_lvl}: {group_id}")
+        await callback.bot.send_document(chat_id=callback.message.chat.id, document=document, caption=f"{eng_lvl}: {group_name}")
 
         try:
             os.remove(file_path)
@@ -218,7 +222,9 @@ async def excel_custom_range(callback: CallbackQuery, button: Button, manager: D
     end_date = datetime.strptime(f"{manager.dialog_data.get('end_year')}-{manager.dialog_data.get('end_month')}-{manager.dialog_data.get('end_day')}", "%Y-%m-%d")
 
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
+    group_id = manager.start_data['group_selected_id']
+    group_name = manager.start_data['group_selected_name']
+    
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
 
     eng_lvl = manager.start_data['selected_level']
@@ -228,11 +234,11 @@ async def excel_custom_range(callback: CallbackQuery, button: Button, manager: D
 
 
     
-    file_path = await attendance_excel.create_attendance_excel(data, eng_lvl, group_id, transfer_data, student_name_dict, start_date=start_date, end_date=end_date)
+    file_path = await attendance_excel.create_attendance_excel(data, eng_lvl, group_name, transfer_data, student_name_dict, start_date=start_date, end_date=end_date)
     if os.path.exists(file_path):
         document = FSInputFile(file_path)
         await callback.answer('Sending a report...')
-        await callback.bot.send_document(chat_id=callback.message.chat.id, document=document, caption=f"{eng_lvl}: {group_id}")
+        await callback.bot.send_document(chat_id=callback.message.chat.id, document=document, caption=f"{eng_lvl}: {group_name}")
 
         try:
             os.remove(file_path)
@@ -258,7 +264,8 @@ async def get_student_transfer_info_from_group(group_details_id, start_date=None
 async def pass_starting_year(callback: CallbackQuery, button: Button, manager: DialogManager):
     
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
+    group_id = manager.start_data['group_selected_id']
+    # group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
     
     month_year_data = await requests.get_month_year_from_attendace(gdi)

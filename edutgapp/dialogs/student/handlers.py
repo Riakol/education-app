@@ -20,7 +20,6 @@ async def remove_selected(callback: CallbackQuery, button: Button, manager: Dial
 
     await manager.done()
 
-
 async def rename_selected(callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str):
     await manager.update({"rename_student_id_selected": int(item_id.split('_')[1])})
 
@@ -77,14 +76,15 @@ async def transfer_group_selected(callback: CallbackQuery, button: Button, manag
     student_id = manager.dialog_data.get("transfer_student_id_selected")
     
     eng_lvl_id = await requests.get_lvl_id(manager.start_data["selected_level"])
-    group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
+    group_id = manager.start_data['group_selected_id']
+    # group_id = await requests.get_group_number(int(manager.start_data['group_selected']))
     gdi = await requests.get_group_details_id(eng_lvl_id, group_id)
     student_details_id = await requests.get_student_details_id(student_id, gdi)
 
     new_transfer_group = await conn.fetch("""
         SELECT id
         FROM group_details
-        WHERE eng_lvl_id = $1 AND group_id = $2;
+        WHERE eng_lvl_id = $1 AND group_id = $2 AND status = 'active';
                                           """, manager.dialog_data.get("transfer_level_id"),
                                           int(manager.dialog_data.get("transfer_group_selected")))
     
@@ -102,7 +102,7 @@ async def transfer_group_selected(callback: CallbackQuery, button: Button, manag
     existing_student = await conn.fetch("""
         SELECT sd.id FROM student_details sd
         JOIN student s ON sd.student_id = s.id
-        WHERE sd.group_details_id = $1 AND s.name = $2;
+        WHERE sd.group_details_id = $1 AND s.name = $2 AND sd.status = 'active';
     """, new_transfer_group_id, student_name)
 
     if existing_student:
@@ -116,7 +116,7 @@ async def transfer_group_selected(callback: CallbackQuery, button: Button, manag
 
     for record in attendance_records:
         await conn.execute("""
-            INSERT INTO student_attendance_history (student_id, eng_lvl, group_number, date, status, absence_reason)
+            INSERT INTO student_attendance_history (student_id, eng_lvl_id, group_id, date, status, absence_reason)
             VALUES ($1, $2, $3, $4, $5, $6);
         """, student_id, eng_lvl_id, group_id, record['date'], record['status'], record.get('absence_reason', None))
 

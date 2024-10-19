@@ -39,7 +39,7 @@ async def access_start():
     return [tg['tg_id'] for tg in access]
 
 async def find_or_create_group(conn, selected_level):
-    
+    #OLD VERSION
      async with conn.transaction():
         level_id = await conn.fetchval("""
             SELECT id FROM level WHERE eng_lvl = $1
@@ -67,21 +67,81 @@ async def find_or_create_group(conn, selected_level):
         """, new_group_number, level_id)
 
         return new_group_number
+     
+async def create_group(selected_level, group_name):
+    conn = await engine.connect_to_db()
+    async with conn.transaction():
+        level_id = await conn.fetchval("""
+            SELECT id FROM level WHERE eng_lvl = $1
+        """, selected_level)
+
+        result = await conn.fetchrow("SELECT id FROM \"group\" WHERE group_name = $1;", group_name)
+        if result:
+            group_id = result['id']
+            
+            existing_group = await conn.fetchrow("""
+                SELECT id FROM group_details 
+                WHERE group_id = $1 AND eng_lvl_id = $2 AND status = 'active'
+            """, group_id, level_id)
+
+            if existing_group:
+                return f"❗ A group named '{group_name}' already exists for the '{selected_level}' level. Please come up with another name."
+        else:
+            result = await conn.fetchrow("INSERT INTO \"group\" (group_name) VALUES ($1) RETURNING id;", group_name)
+            group_id = result['id']
+
+        await conn.execute("""
+            INSERT INTO group_details (group_id, eng_lvl_id)
+            VALUES ($1, $2)
+        """, group_id, level_id)
+
+        return f"✅ The group '{group_name}' has been successfully created for the level '{selected_level}'." 
     
+
+async def rename_group(selected_level, group_name, group_details_id):
+    conn = await engine.connect_to_db()
+    async with conn.transaction():
+        level_id = await conn.fetchval("""
+            SELECT id FROM level WHERE eng_lvl = $1
+        """, selected_level)
+
+        result = await conn.fetchrow("SELECT id FROM \"group\" WHERE group_name = $1;", group_name)
+        if result:
+            group_id = result['id']
+            
+            existing_group = await conn.fetchrow("""
+                SELECT id FROM group_details 
+                WHERE group_id = $1 AND eng_lvl_id = $2 AND status = 'active'
+            """, group_id, level_id)
+
+            if existing_group:
+                return f"❗ A group named '{group_name}' already exists for the '{selected_level}' level. Please come up with another name."
+        else:
+            result = await conn.fetchrow("INSERT INTO \"group\" (group_name) VALUES ($1) RETURNING id;", group_name)
+            group_id = result['id']
+
+        await conn.execute("""
+            UPDATE group_details 
+                SET group_id = $1 
+                WHERE id = $2
+        """, group_id, group_details_id)
+
+        return f"✅ The group has been successfully renamed to '{group_name}'." 
+        
 
 async def get_groups_for_level(selected_level):
     """ Получаем список групп для заданного уровня """
 
     conn = await engine.connect_to_db()
     groups = await conn.fetch("""
-        SELECT g.id, g.group_number 
+        SELECT g.id, g.group_name 
         FROM group_details gd
         JOIN "group" g ON gd.group_id = g.id
-        WHERE gd.eng_lvl_id = $1
+        WHERE gd.eng_lvl_id = $1 AND gd.status = 'active'
     """, selected_level)
 
     if groups:
-        sorted_groups = sorted(groups, key=lambda x: x['group_number'])
+        sorted_groups = sorted(groups, key=lambda x: x['group_name'])
         return sorted_groups
 
 
@@ -96,11 +156,11 @@ async def get_lvl_id(selected_level):
 
 async def get_group_number(group_id):
     conn = await engine.connect_to_db()
-    group_number_not_id = await conn.fetchval("""
-        SELECT group_number FROM "group" WHERE id = $1
+    group_name_not_id = await conn.fetchval("""
+        SELECT group_name FROM "group" WHERE id = $1
     """, group_id)
 
-    return group_number_not_id
+    return group_name_not_id
 
 async def add_student(student_name):
     conn = await engine.connect_to_db()
@@ -134,7 +194,7 @@ async def get_student_id_from_group(group_details_id):
 async def get_group_details_id(eng_lvl_id, group_id):
     conn = await engine.connect_to_db()
     group_details_id = await conn.fetchval("""
-        SELECT id FROM group_details WHERE eng_lvl_id = $1 AND group_id = $2
+        SELECT id FROM group_details WHERE eng_lvl_id = $1 AND group_id = $2 AND status = 'active'
     """, eng_lvl_id, group_id)
 
     return group_details_id
@@ -153,7 +213,7 @@ async def get_students_from_group(group_details_id):
             SELECT s.name, s.id 
             FROM student s
             JOIN student_details sd ON s.id = sd.student_id
-            WHERE sd.group_details_id = $1;
+            WHERE sd.group_details_id = $1 AND sd.status = 'active';
         """, group_details_id)
         
     return [(record['name'], record['id']) for record in get_students]
@@ -323,7 +383,13 @@ async def update_student_name(new_name, student_id):
  
 async def remove_student(student_id):
     conn = await engine.connect_to_db()
+    await conn.execute("""
+        UPDATE student_details
+        SET status = 'inactive'
+        WHERE student_id = $1;
+    """, student_id)
     
+    '''
     await conn.execute("""
             DELETE FROM student_details
             WHERE student_id = $1;
@@ -333,17 +399,18 @@ async def remove_student(student_id):
             DELETE FROM student
             WHERE id = $1;
         """, student_id)
+    '''
     
 
 async def get_transfer_info(student_ids):
     # SQL-запрос для получения данных о переводе студентов, включая уровень и группу
     conn = await engine.connect_to_db()
     transfer_data = await conn.fetch("""
-    SELECT s.id AS student_id, l.eng_lvl, g.group_number, sah.date, sah.status, sah.absence_reason
+    SELECT s.id AS student_id, l.eng_lvl, g.group_name, sah.date, sah.status, sah.absence_reason
     FROM student_attendance_history sah
     JOIN student s ON sah.student_id = s.id  
-    JOIN level l ON sah.eng_lvl = l.id
-    JOIN "group" g ON sah.group_number = g.id
+    JOIN level l ON sah.eng_lvl_id = l.id
+    JOIN "group" g ON sah.group_id = g.id
     WHERE sah.student_id = ANY($1)
     ORDER BY sah.date;
     """, student_ids)
@@ -355,14 +422,46 @@ async def get_transfer_info_custom(student_ids, start_date, end_date):
     # SQL-запрос для получения данных о переводе студентов, включая уровень и группу
     conn = await engine.connect_to_db()
     transfer_data = await conn.fetch("""
-    SELECT s.id AS student_id, l.eng_lvl, g.group_number, sah.date, sah.status, sah.absence_reason
+    SELECT s.id AS student_id, l.eng_lvl, g.group_name, sah.date, sah.status, sah.absence_reason
     FROM student_attendance_history sah
     JOIN student s ON sah.student_id = s.id 
-    JOIN level l ON sah.eng_lvl = l.id
-    JOIN "group" g ON sah.group_number = g.id
+    JOIN level l ON sah.eng_lvl_id = l.id
+    JOIN "group" g ON sah.group_id = g.id
     WHERE sah.student_id = ANY($1)
       AND sah.date BETWEEN $2 AND $3
     ORDER BY sah.date;
     """, student_ids, start_date, end_date)
 
     return transfer_data
+
+
+async def get_attendance_remainder(student_details_id):
+    conn = await engine.connect_to_db()
+    student_reminder = await conn.fetchrow("""
+            SELECT 
+                COUNT(*) FILTER (WHERE status IN ('present', 'absent')) AS total_classes,
+                COUNT(*) FILTER (WHERE status = 'other') AS other_days,
+                COUNT(*) FILTER (WHERE status IN ('present', 'absent')) % 12 AS remainder
+            FROM 
+                attendance
+            WHERE 
+                student_details_id = $1
+            GROUP BY 
+                student_details_id;
+        """, student_details_id)
+    # student_remainder = await conn.fetchrow("""
+    #         SELECT 
+    #             student_details_id,
+    #             COUNT(*) AS total_classes,
+    #             COUNT(*) % 12 AS remainder
+    #         FROM 
+    #             attendance
+    #         WHERE 
+    #             student_details_id = $1
+    #             AND status IN ('present', 'absent')
+    #         GROUP BY 
+    #             student_details_id;
+    #     """, (student_details_id))
+   
+
+    return student_reminder

@@ -16,10 +16,12 @@ from dialogs.student import handlers as action
 async def student_window():
     back_to_group_menu = Cancel(text=Const("⬅️ Back"))
     show_levels = await action.level_buttons()
+    editing_student_menu = SwitchTo(text=Const("⬅️ Cancel"), 
+            id="goto_editing_student_menu", state=FSM.Student.editing_student_menu)
 
     dialog = Dialog(
         Window(
-            Format("{selected_level}: {group_selected} ⤵️"),
+            Format("{selected_level}: {group_selected_name} ⤵️"),
             Button(Const("Remove"), 
                     id="remove_student", on_click=SwitchTo(text=Const("remove student"), 
                                                            id="goto_remove_student", 
@@ -33,13 +35,17 @@ async def student_window():
                     id="rename_student", on_click=SwitchTo(text=Const("rename student"), 
                                                            id="goto_rename_student", 
                                                            state=FSM.Student.rename_student)),
+                Button(Const("Set reminder"), 
+                    id="reminder", on_click=SwitchTo(text=Const("Set reminder"), 
+                                                           id="goto_reminder_student", 
+                                                           state=FSM.Student.rename_student)),
                 width=2,
             ),
             back_to_group_menu,
             state=FSM.Student.editing_student_menu
         ),
         Window(
-            Format("{selected_level}: {group_selected} ⤵️"),
+            Format("{selected_level}: {group_selected_name} ⤵️"),
             Group(
                Select(
                     Format("{item[0]}"),
@@ -50,11 +56,11 @@ async def student_window():
                 ),
                 width=1, 
             ),
-            Back(text=Const("⬅️ Back")),
+            editing_student_menu,
             state=FSM.Student.remove_student
         ),
         Window(
-            Format("{selected_level}: {group_selected} ⤵️"),
+            Format("{selected_level}: {group_selected_name} ⤵️"),
             Group(
                Select(
                     Format("{item[0]}"),
@@ -65,16 +71,15 @@ async def student_window():
                 ),
                 width=1, 
             ),
-            SwitchTo(text=Const("⬅️ Cancel"), 
-                    id="goto_student_menu", 
-                    state=FSM.Student.editing_student_menu),
+            editing_student_menu,
             state=FSM.Student.rename_student
         ),
         Window(
             Const("Enter the student's new name:"),
             TextInput(id="new_student_name", 
                     on_success=Cancel(on_click=action.update_student_name)),
-            Back(text=Const("⬅️ Back")),
+            # Back(text=Const("⬅️ Back")),
+            editing_student_menu,
             state=FSM.Student.update_student_name,
         ),
         Window(
@@ -89,7 +94,8 @@ async def student_window():
                 ),
                 width=1, 
             ),
-            Back(text=Const("⬅️ Back")),
+            # Back(text=Const("⬅️ Back")),
+            editing_student_menu,
             state=FSM.Student.transfer_student,
         ),
         Window(

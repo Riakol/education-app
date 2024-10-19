@@ -6,7 +6,8 @@ async def get_data_student(dialog_manager: DialogManager, **kwargs):
 
     return {
         "selected_level": start_data["selected_level"],
-        "group_selected": start_data["group_selected"],
+        "group_selected_id": start_data["group_selected_id"],
+        "group_selected_name": start_data["group_selected_name"],
         "student_buttons": start_data["student_buttons"],
 
         "rename_student_id_selected": data.get("rename_student_id_selected"),

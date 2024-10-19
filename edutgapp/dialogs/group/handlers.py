@@ -19,10 +19,12 @@ async def level_menu(callback: CallbackQuery, button: Button, manager: DialogMan
 
 async def check_saved(event: ChatEvent, checkbox: ManagedCheckbox,
                         manager: DialogManager):
-        
+
+    students_to_notify = []    
     current_date = datetime.now().date()
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    group_id = manager.dialog_data.get('group_selected_id')
+    # group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
     
     group_details_id = await requests.get_group_details_id(eng_lvl_id, group_id)
     
@@ -40,7 +42,7 @@ async def check_saved(event: ChatEvent, checkbox: ManagedCheckbox,
             student_name_present, student_id_present = student_tuple
             if student_id_present in student_dict:
                 student_details_id = await requests.get_student_details_id(student_id_present, group_details_id)
-                print(student_details_id)
+                # print(student_details_id)
 
                 status = "present"
                 await requests.add_student_attendance(student_details_id, current_date, status)
@@ -54,8 +56,12 @@ async def check_saved(event: ChatEvent, checkbox: ManagedCheckbox,
             student_details_id = await requests.get_student_details_id(student_id, group_details_id)
             await requests.add_student_attendance(student_details_id, current_date)
     
+
+    reminder = await get_reminder(all_students_group, group_details_id)
+    if reminder:
+        await event.message.answer(f"‼️ Today is the 12th lesson:\n\n{reminder}")
+
     await event.answer("✅ The data has been saved successfully!")
-    
     await manager.switch_to(FSM.Group.inside_group)
 
 
@@ -68,26 +74,88 @@ async def other_check_saved(event: ChatEvent, checkbox: ManagedCheckbox,
     await manager.switch_to(FSM.Group.input_absence_reason)
 
 
-async def create_group(callback: CallbackQuery, button: Button, manager: DialogManager):
+async def create_group(callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str):
     """ Обработка создания новой группы """
     selected_level = manager.start_data['selected_level']
+    group_name = item_id
+    create_group_reqeust = await requests.create_group(selected_level, group_name)
+    await callback.answer(create_group_reqeust)
 
-    conn = await engine.connect_to_db()
+    # selected_level = manager.start_data['selected_level']
 
-    try:
-        group_number = await requests.find_or_create_group(conn, selected_level)
-        await callback.answer(f"Группа {group_number} для уровня {selected_level} была создана.")
-    finally:
-        await engine.close_db_connection(conn)
+    # conn = await engine.connect_to_db()
+
+    # try:
+    #     group_number = await requests.find_or_create_group(conn, selected_level)
+    #     await callback.answer(f"Группа {group_number} для уровня {selected_level} была создана.")
+    # finally:
+    #     await engine.close_db_connection(conn)
 
     await manager.switch_to(FSM.Group.choose_group)
 
+
+async def rename_group(callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str):
+    """ Обработка создания новой группы """
+    selected_level = manager.start_data['selected_level']
+    group_name = item_id
+    gdi = await requests.get_group_details_id(await requests.get_lvl_id(selected_level), manager.dialog_data.get('group_selected_id'))
+
+    rename_group_reqeust = await requests.rename_group(selected_level, group_name, gdi)
+    await callback.answer(rename_group_reqeust)
+    await manager.switch_to(FSM.Group.choose_group)
+    # selected_level = manager.start_data['selected_level']
+
+    # conn = await engine.connect_to_db()
+
+    # try:
+    #     group_number = await requests.find_or_create_group(conn, selected_level)
+    #     await callback.answer(f"Группа {group_number} для уровня {selected_level} была создана.")
+    # finally:
+    #     await engine.close_db_connection(conn)
+
+    
 
 async def delete_group(callback: CallbackQuery, button: Button, manager: DialogManager):
     
     conn = await engine.connect_to_db()
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    group_id = manager.dialog_data.get('group_selected_id')
+    group_details_id = await requests.get_group_details_id(eng_lvl_id, group_id)
+
+    # Получаем студентов, связанные с группой
+    get_students = await conn.fetch("""
+        SELECT sd.id 
+        FROM student_details sd
+        WHERE sd.group_details_id = $1;
+    """, group_details_id)
+    
+    students_id = [record['id'] for record in get_students]
+
+    # Обновляем статус группы на 'inactive'
+    await conn.execute("""
+        UPDATE group_details 
+        SET status = 'inactive' 
+        WHERE id = $1
+    """, group_details_id)
+
+    # Обновляем статус студентов на 'inactive'
+    if students_id:
+        await conn.execute("""
+            UPDATE student_details 
+            SET status = 'inactive' 
+            WHERE id = ANY($1::int[])
+        """, students_id)
+
+    await callback.answer(f"✅ the group was successfully deleted!")
+ 
+    await manager.switch_to(FSM.Group.choose_group)
+
+    '''
+    Это рабочий код на удаление группы вместе с учениками.
+
+    conn = await engine.connect_to_db()
+    eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
+    group_id = manager.dialog_data.get('group_selected_id')
     group_details_id = await requests.get_group_details_id(eng_lvl_id, group_id)
 
     get_students = await conn.fetch("""
@@ -107,11 +175,7 @@ async def delete_group(callback: CallbackQuery, button: Button, manager: DialogM
         await conn.fetchval("""
             DELETE FROM student WHERE id = ANY($1::int[])
         """, students_id)
-
-    
-    await callback.answer(f"✅ the group was successfully deleted!")
- 
-    await manager.switch_to(FSM.Group.choose_group)
+    '''
 
 
 async def get_group_buttons(selected_level):
@@ -119,7 +183,7 @@ async def get_group_buttons(selected_level):
 
     if groups:
         group_buttons = [
-            (group_id['group_number'], Button(text=Const(f"Group: {group_id['group_number']}"), id=f"{group_id['id']}", on_click=group_selected))
+            (group_id['group_name'], Button(text=Const(f"Group: {group_id['group_name']}"), id=f"{group_id['id']}", on_click=group_selected))
             for group_id in groups
         ]
     else:
@@ -141,15 +205,44 @@ async def get_groups_clicked(callback: CallbackQuery, button: Button, manager: D
 
 
 async def group_selected(callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str):
-    await manager.update({"group_selected": item_id})
+    await manager.update({"group_selected_name": await requests.get_group_number(int(item_id))})
+    await manager.update({"group_selected_id": int(item_id)})
     #item_id это id группы, а не имя группы
+        
+    eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
+    group_id = int(item_id)
+    group_details_id = await requests.get_group_details_id(eng_lvl_id, group_id)
     
-    await manager.next()
+    student_names = await requests.get_students_from_group(group_details_id)
+    all_students_group = [(name, id) for name, id in student_names]
+
+    reminder = await get_reminder(all_students_group, group_details_id)
+    if reminder:
+        await callback.message.answer(f"‼️ 12 lessons have passed.\n⚠️ Have the students paid for the subscription?\n\n{reminder}")
+
+    await manager.switch_to(FSM.Group.inside_group)
+
+
+async def get_reminder(all_students_group, group_details_id): 
+    students_to_notify = []
+
+    for student_name, student_id in all_students_group:
+        student_subs = await requests.get_attendance_remainder(await requests.get_student_details_id(student_id, group_details_id))
+        # print(f"THIS IS REMAINDER: {student_subs['remainder']}")
+        # print(f"THIS IS REM-OTHER: {student_subs['remainder'] - student_subs['other_days']}")
+        if student_subs['remainder'] - student_subs['other_days'] == 0 and student_subs['total_classes'] > 0:
+            students_to_notify.append(f"• {student_name}")
+    
+    if students_to_notify:
+        students_list_to_notify = "\n".join(students_to_notify)
+        return students_list_to_notify
+    return None
 
 
 async def editing_student(callback: CallbackQuery, button: Button, manager: DialogManager):
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    # group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    group_id = manager.dialog_data.get('group_selected_id')
     
     group_details_id = await requests.get_group_details_id(eng_lvl_id, group_id)
     
@@ -166,7 +259,8 @@ async def editing_student(callback: CallbackQuery, button: Button, manager: Dial
 
     
     await manager.start(FSM.Student.editing_student_menu, data={"selected_level": manager.start_data['selected_level'],
-                                                         "group_selected": manager.dialog_data.get('group_selected'),
+                                                         "group_selected_id": manager.dialog_data.get('group_selected_id'),
+                                                         "group_selected_name": manager.dialog_data.get('group_selected_name'),
                                                          "student_buttons": student_buttons})
 
 async def student_absence_selected(callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str):
@@ -178,9 +272,11 @@ async def student_absence_selected(callback: CallbackQuery, button: Button, mana
 async def add_student(callback: CallbackQuery, button: Button, manager: DialogManager):
 
     student_name = manager.find("student_name").get_value()
+    # print(f"THIS IS {int(manager.dialog_data.get('group_selected'))}")
     group_details_id = await requests.get_group_details_id(
         await requests.get_lvl_id(manager.start_data['selected_level']),
-        await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+        # await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+        manager.dialog_data.get('group_selected_id')
     )
 
     if student_name:
@@ -198,7 +294,8 @@ async def add_student(callback: CallbackQuery, button: Button, manager: DialogMa
     
 async def show_students(callback: CallbackQuery, button: Button, manager: DialogManager):
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    # group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    group_id = manager.dialog_data.get('group_selected_id')
     
     students = await requests.get_students_from_group(await requests.get_group_details_id(eng_lvl_id, group_id))
     student_names = [(name, id) for name, id in students]
@@ -210,7 +307,8 @@ async def show_students(callback: CallbackQuery, button: Button, manager: Dialog
 
 async def show_attendance(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.start(FSM.Attendance.attendance, data={"selected_level": manager.start_data['selected_level'],
-                                                         "group_selected": manager.dialog_data.get('group_selected')})
+                                                         "group_selected_id": manager.dialog_data.get('group_selected_id'),
+                                                         "group_selected_name": manager.dialog_data.get('group_selected_name')})
     
 async def absence_reason(callback: CallbackQuery, button: Button, manager: DialogManager):
     current_date = datetime.now().date()
@@ -219,7 +317,8 @@ async def absence_reason(callback: CallbackQuery, button: Button, manager: Dialo
     print(absence)
     group_details_id = await requests.get_group_details_id(
         await requests.get_lvl_id(manager.start_data['selected_level']),
-        await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+        manager.dialog_data.get('group_selected_id')
+        # await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
     )
     student_details_id = await requests.get_student_details_id(manager.dialog_data.get('studentid_absence_selected'), group_details_id)
 
@@ -229,7 +328,8 @@ async def absence_reason(callback: CallbackQuery, button: Button, manager: Dialo
 
 async def absence_student_btns(callback: CallbackQuery, button: Button, manager: DialogManager):
     eng_lvl_id = await requests.get_lvl_id(manager.start_data['selected_level'])
-    group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
+    group_id = manager.dialog_data.get('group_selected_id')
+    # group_id = await requests.get_group_number(int(manager.dialog_data.get('group_selected')))
     
     group_details_id = await requests.get_group_details_id(eng_lvl_id, group_id)
     

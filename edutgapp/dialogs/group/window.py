@@ -35,25 +35,35 @@ async def groups():
         Format("{selected_level}"),
         Group(
             back_to_group_menu,
-            Button(Const("Create a group 🔧"), id="create_group", on_click=action.create_group),
+            Button(Const("Create a group 🔧"), id="create_group", on_click=SwitchTo(text=Const("input group name"), 
+            id="inp_group_name", state=FSM.Group.create_group_name)),
             width=2,  
         ),     
         state=FSM.Group.create_group,
     ),
     Window(
+        Format("{selected_level}\nCome up with a name for the group"),
+        TextInput(id="input_group_name", 
+                on_success=action.create_group), 
+        state=FSM.Group.create_group_name,
+    ),
+    Window(
         Format("{selected_level}: Select a group ⤵️"),
-        Select(
+        Group(
+            Select(
             Format("{item[0]}"),
             id="s_groups",
             item_id_getter=lambda x: x[1].widget_id,
             items="group_buttons",
             on_click=action.group_selected,
+            ),
+            width=1,
         ),
         back_to_group_menu,
         state=FSM.Group.select_group,
     ),
     Window(
-        Format("{selected_level}: {group_selected} ⤵️"),
+        Format("{selected_level}: {group_selected_name} ⤵️"),
         Group(
             Button(Const("🛠️ Editing"), 
                 id="editing", on_click=action.editing_student),
@@ -72,10 +82,17 @@ async def groups():
                                                  state=FSM.Group.mark_group_attendance)),
             width=2,
         ),
-        Button(Const("⛔ Delete group"), 
+        Group(
+            Button(Const("⛔ Delete group"), 
                 id="delgroup", on_click=SwitchTo(text=Const("Delete group"), 
                                                  id="goto_delete_group", 
-                                                 state=FSM.Group.delete_group)),       
+                                                 state=FSM.Group.delete_group)),
+            Button(Const("🔧 Rename group"), 
+                id="rename_group", on_click=SwitchTo(text=Const("Rename group"), 
+                                                 id="goto_rename_group", 
+                                                 state=FSM.Group.rename_group)),
+            width=2,
+        ),    
         Back(text=Const("⬅️ Back")),
         state=FSM.Group.inside_group,
     ),
@@ -125,7 +142,14 @@ async def groups():
         state=FSM.Group.input_student_name,
     ),
     Window(
-        Format("{selected_level}: {group_selected}"),
+        Format("Enter a new name for the group:"),
+        TextInput(id="new_group_name", 
+            on_success=action.rename_group),
+        back_to_inside_group_menu,
+        state=FSM.Group.rename_group,
+    ),
+    Window(
+        Format("{selected_level}: {group_selected_name}"),
         Format("Are You Sure?"),
         Group(
             Button(Const("Delete ❌"), id="delete_group", on_click=action.delete_group),
@@ -135,7 +159,7 @@ async def groups():
         state=FSM.Group.delete_group,
     ),
     Window(
-        Format("{selected_level}: {group_selected} ⤵️"),
+        Format("{selected_level}: {group_selected_name} ⤵️"),
         Group(
             Multiselect(
                 Format("✅ {item[0]}"),

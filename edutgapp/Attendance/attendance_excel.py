@@ -131,7 +131,7 @@ async def create_attendance_excel(data, eng_level, group_number, transfer_data, 
 
         for transfer in transfer_data:
             student_name = student_name_dict.get(transfer['student_id'], 'Unknown')
-            transfer_key = (student_name, transfer['eng_lvl'], transfer['group_number'])
+            transfer_key = (student_name, transfer['eng_lvl'], transfer['group_name'])
 
             if transfer_key not in transfer_present_count:
                 transfer_present_count[transfer_key] = 0
