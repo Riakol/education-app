@@ -11,8 +11,10 @@ This Telegram bot is designed to streamline the management of student attendance
           - Create groups based on language proficiency levels to tailor learning experiences. Remove groups when they are no longer needed, ensuring a streamlined approach to group management.
 - **Teacher**:
      - **Notification for Subscription Classes**:
-          - Last Class Notification: Teachers will receive a notification regarding the last class attended by students on their subscription. This ensures that teachers are aware of which students have completed their sessions and can prepare accordingly for future lessons.
-          - Payment Reminder for Next Lesson: A reminder will be sent to teachers for students who have completed 12 classes, prompting them to check if those students have made their payment for the next lesson. This helps maintain a smooth workflow and ensures that students are up-to-date with their subscriptions.
+          - **Last Class Notification**:
+               - Teachers will receive a notification regarding the last class attended by students on their subscription. This ensures that teachers are aware of which students have completed their sessions and can prepare accordingly for future lessons.
+          - **Payment Reminder for Next Lesson**:
+               - A reminder will be sent to teachers for students who have completed 12 classes, prompting them to check if those students have made their payment for the next lesson. This helps maintain a smooth workflow and ensures that students are up-to-date with their subscriptions.
 - **Student Management**:
      - **Comprehensive Student Profiles**:
           - Easily add, remove, and update student information, ensuring that records are always current and accurate.
