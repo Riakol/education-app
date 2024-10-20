@@ -5,17 +5,24 @@ This Telegram bot is designed to streamline the management of student attendance
 ## Features
 
 - **Groups**:
-     - Group Naming: Users can now assign names to groups, making it easier to identify and manage them. Additionally, the option to rename groups has been introduced, allowing for better organization as the educational landscape evolves.
-     - Group Management: Create groups based on language proficiency levels to tailor learning experiences. Remove groups when they are no longer needed, ensuring a streamlined approach to group management.
+     - **Group Naming**:
+          - Users can now assign names to groups, making it easier to identify and manage them. Additionally, the option to rename groups has been introduced, allowing for better organization as the educational landscape evolves.
+     - **Group Management**:
+          - Create groups based on language proficiency levels to tailor learning experiences. Remove groups when they are no longer needed, ensuring a streamlined approach to group management.
+- **Teacher**:
+     - **Notification for Subscription Classes**:
+          - Last Class Notification: Teachers will receive a notification regarding the last class attended by students on their subscription. This ensures that teachers are aware of which students have completed their sessions and can prepare accordingly for future lessons.
+          - Payment Reminder for Next Lesson: A reminder will be sent to teachers for students who have completed 12 classes, prompting them to check if those students have made their payment for the next lesson. This helps maintain a smooth workflow and ensures that students are up-to-date with their subscriptions.
 - **Student Management**:
-     - Comprehensive Student Profiles: Easily add, remove, and update student information, ensuring that records are always current and accurate.
-     - Historical Data Access: Users can now view students who are no longer enrolled, with their attendance history preserved for reference and analysis.
+     - **Comprehensive Student Profiles**:
+          - Easily add, remove, and update student information, ensuring that records are always current and accurate.
+     - **Historical Data Access**:
+          - Users can now view students who are no longer enrolled, with their attendance history preserved for reference and analysis.
 - **Attendance Tracking**:
-     - Efficient Attendance Marking: Mark student attendance efficiently, simplifying the process for educators.
-     - Attendance Export: Export group attendance records in Excel format for all time, providing a comprehensive overview of attendance data. Users can select a specific date range to export attendance records, allowing for more tailored reporting.
-- **Attendance Export**:
-     - Export group attendance records in Excel format for all time.
-     - Select a specific date range to export attendance records, allowing for more tailored reporting.
+     - **Efficient Attendance Marking**:
+          - Mark student attendance efficiently, simplifying the process for educators.
+     - **Attendance Export**:
+          - Export group attendance records in Excel format for all time, providing a comprehensive overview of attendance data. Users can select a specific date range to export attendance records, allowing for more tailored reporting.
 
 Updates:
 - **Student Transfers Between Groups**:
@@ -40,7 +47,8 @@ Updates:
 
 ![image](https://github.com/user-attachments/assets/733c504b-9871-4fff-bbe0-a2f54da1490b)
 
-![image](https://github.com/user-attachments/assets/9cacae19-280e-4145-846b-ac6e07c3462b)
+### Group Menu
+![image](https://github.com/user-attachments/assets/13f9f29b-ba0b-4a26-b162-00b85107ca18)
 
 ### Editing
 ![image](https://github.com/user-attachments/assets/cc2380a3-be51-4fca-86a2-e273a36a31f6)
