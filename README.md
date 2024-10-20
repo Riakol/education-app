@@ -59,6 +59,10 @@ Updates:
 ### mark
 ![image](https://github.com/user-attachments/assets/b14c0cf9-e61c-4a54-b092-a20e9a2097db)
 
+![image](https://github.com/user-attachments/assets/2a6ed3bf-24dc-48ac-b261-2cfdcd047641)
+
+![image](https://github.com/user-attachments/assets/280836f6-d27b-407a-98b7-67b78424a306)
+
 ### View Attendance
 ![image](https://github.com/user-attachments/assets/99fbfacc-d46b-46fc-bd77-412d539b3df0)
 
