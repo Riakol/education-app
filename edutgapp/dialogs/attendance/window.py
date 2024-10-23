@@ -10,8 +10,8 @@ from aiogram_dialog import (
     Dialog, Window
 )
 from aiogram_dialog.widgets.input import TextInput
-from dialogs.attendace.getters import get_data_attendance
-from dialogs.attendace import handlers as action
+from dialogs.attendance.getters import get_data_attendance
+from dialogs.attendance import handlers as action
 
 
 async def attendance_window():

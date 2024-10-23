@@ -3,7 +3,7 @@ import asyncio
 import FSM
 import dialogs.group.window
 import dialogs.level.window
-import dialogs.attendace.window
+import dialogs.attendance.window
 import dialogs.student.window
 
 from database.engine import db
@@ -28,7 +28,7 @@ async def main():
 
     dp.include_router(await dialogs.level.window.level_window())
     dp.include_router(await dialogs.group.window.groups())
-    dp.include_router(await dialogs.attendace.window.attendance_window())
+    dp.include_router(await dialogs.attendance.window.attendance_window())
     dp.include_router(await dialogs.student.window.student_window())
     setup_dialogs(dp)
 
