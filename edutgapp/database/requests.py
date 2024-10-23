@@ -1,5 +1,5 @@
 import logging
-from database import engine
+from database.engine import db
 
 levels = {
         "elementary": "Elementary",
@@ -25,27 +25,43 @@ months_dict = {
     12: "December"
 }
 
+async def choose_lvl():
+    # conn = await connect_to_db()
+    rows = await db.fetch("SELECT * FROM Level")
+    return rows
+
+
+async def student_levels():
+    
+    # conn = await connect_to_db()
+    rows = await choose_lvl()
+
+    temp = []
+    for row in rows:
+        temp.append(row["eng_lvl"])
+    return temp
+
 async def get_num_by_month(dct, value):
     return next((k for k, v in dct.items() if v == value), None)
 
 
 async def access_start():
-    conn = await engine.connect_to_db()
-    access = await conn.fetch(
+    # conn = await engine.connect_to_db()
+    access = await db.fetch(
         """
         SELECT tg_id FROM teacher
         """)
     
     return [tg['tg_id'] for tg in access]
 
-async def find_or_create_group(conn, selected_level):
+async def find_or_create_group(db, selected_level):
     #OLD VERSION
-     async with conn.transaction():
-        level_id = await conn.fetchval("""
+     async with db.transaction():
+        level_id = await db.fetchval("""
             SELECT id FROM level WHERE eng_lvl = $1
         """, selected_level)
 
-        existing_groups = await conn.fetch("""
+        existing_groups = await db.fetch("""
             SELECT group_id
             FROM group_details
             WHERE eng_lvl_id = $1
@@ -61,7 +77,7 @@ async def find_or_create_group(conn, selected_level):
             else:
                 break  
 
-        await conn.execute("""
+        await db.execute("""
             INSERT INTO group_details (group_id, eng_lvl_id)
             VALUES ($1, $2)
         """, new_group_number, level_id)
@@ -69,17 +85,17 @@ async def find_or_create_group(conn, selected_level):
         return new_group_number
      
 async def create_group(selected_level, group_name):
-    conn = await engine.connect_to_db()
-    async with conn.transaction():
-        level_id = await conn.fetchval("""
+    # conn = await engine.connect_to_db()
+    async with db.transaction():
+        level_id = await db.fetchval("""
             SELECT id FROM level WHERE eng_lvl = $1
         """, selected_level)
 
-        result = await conn.fetchrow("SELECT id FROM \"group\" WHERE group_name = $1;", group_name)
+        result = await db.fetchrow("SELECT id FROM \"group\" WHERE group_name = $1;", group_name)
         if result:
             group_id = result['id']
             
-            existing_group = await conn.fetchrow("""
+            existing_group = await db.fetchrow("""
                 SELECT id FROM group_details 
                 WHERE group_id = $1 AND eng_lvl_id = $2 AND status = 'active'
             """, group_id, level_id)
@@ -87,10 +103,10 @@ async def create_group(selected_level, group_name):
             if existing_group:
                 return f"❗ A group named '{group_name}' already exists for the '{selected_level}' level. Please come up with another name."
         else:
-            result = await conn.fetchrow("INSERT INTO \"group\" (group_name) VALUES ($1) RETURNING id;", group_name)
+            result = await db.fetchrow("INSERT INTO \"group\" (group_name) VALUES ($1) RETURNING id;", group_name)
             group_id = result['id']
 
-        await conn.execute("""
+        await db.execute("""
             INSERT INTO group_details (group_id, eng_lvl_id)
             VALUES ($1, $2)
         """, group_id, level_id)
@@ -99,17 +115,17 @@ async def create_group(selected_level, group_name):
     
 
 async def rename_group(selected_level, group_name, group_details_id):
-    conn = await engine.connect_to_db()
-    async with conn.transaction():
-        level_id = await conn.fetchval("""
+    # conn = await engine.connect_to_db()
+    async with db.transaction():
+        level_id = await db.fetchval("""
             SELECT id FROM level WHERE eng_lvl = $1
         """, selected_level)
 
-        result = await conn.fetchrow("SELECT id FROM \"group\" WHERE group_name = $1;", group_name)
+        result = await db.fetchrow("SELECT id FROM \"group\" WHERE group_name = $1;", group_name)
         if result:
             group_id = result['id']
             
-            existing_group = await conn.fetchrow("""
+            existing_group = await db.fetchrow("""
                 SELECT id FROM group_details 
                 WHERE group_id = $1 AND eng_lvl_id = $2 AND status = 'active'
             """, group_id, level_id)
@@ -117,10 +133,10 @@ async def rename_group(selected_level, group_name, group_details_id):
             if existing_group:
                 return f"❗ A group named '{group_name}' already exists for the '{selected_level}' level. Please come up with another name."
         else:
-            result = await conn.fetchrow("INSERT INTO \"group\" (group_name) VALUES ($1) RETURNING id;", group_name)
+            result = await db.fetchrow("INSERT INTO \"group\" (group_name) VALUES ($1) RETURNING id;", group_name)
             group_id = result['id']
 
-        await conn.execute("""
+        await db.execute("""
             UPDATE group_details 
                 SET group_id = $1 
                 WHERE id = $2
@@ -132,8 +148,8 @@ async def rename_group(selected_level, group_name, group_details_id):
 async def get_groups_for_level(selected_level):
     """ Получаем список групп для заданного уровня """
 
-    conn = await engine.connect_to_db()
-    groups = await conn.fetch("""
+    # conn = await engine.connect_to_db()
+    groups = await db.fetch("""
         SELECT g.id, g.group_name 
         FROM group_details gd
         JOIN "group" g ON gd.group_id = g.id
@@ -146,8 +162,8 @@ async def get_groups_for_level(selected_level):
 
 
 async def get_lvl_id(selected_level):
-    conn = await engine.connect_to_db()
-    level_id = await conn.fetchval("""
+    # conn = await engine.connect_to_db()
+    level_id = await db.fetchval("""
         SELECT id FROM level WHERE eng_lvl = $1
     """, selected_level)
 
@@ -155,24 +171,24 @@ async def get_lvl_id(selected_level):
 
 
 async def get_group_number(group_id):
-    conn = await engine.connect_to_db()
-    group_name_not_id = await conn.fetchval("""
+    # conn = await engine.connect_to_db()
+    group_name_not_id = await db.fetchval("""
         SELECT group_name FROM "group" WHERE id = $1
     """, group_id)
 
     return group_name_not_id
 
 async def add_student(student_name):
-    conn = await engine.connect_to_db()
-    result = await conn.fetchrow("""
+    # conn = await engine.connect_to_db()
+    result = await db.fetchrow("""
         INSERT INTO student (name) VALUES ($1) RETURNING id;
     """, student_name)
     return result['id']
     
 async def get_student_id(student_name):
     try:
-        conn = await engine.connect_to_db()
-        return await conn.fetchval("""
+        # conn = await engine.connect_to_db()
+        return await db.fetchval("""
             SELECT id FROM student WHERE name = $1""", 
             student_name)
     except Exception as e:
@@ -180,8 +196,8 @@ async def get_student_id(student_name):
 
 async def get_student_id_from_group(group_details_id):
     try:
-        conn = await engine.connect_to_db()
-        return await conn.fetchval('''
+        # conn = await engine.connect_to_db()
+        return await db.fetchval('''
         SELECT sd.student_id
         FROM student_details sd
         JOIN group_details gd ON sd.group_details_id = gd.id
@@ -192,24 +208,24 @@ async def get_student_id_from_group(group_details_id):
 
     
 async def get_group_details_id(eng_lvl_id, group_id):
-    conn = await engine.connect_to_db()
-    group_details_id = await conn.fetchval("""
+    # conn = await engine.connect_to_db()
+    group_details_id = await db.fetchval("""
         SELECT id FROM group_details WHERE eng_lvl_id = $1 AND group_id = $2 AND status = 'active'
     """, eng_lvl_id, group_id)
 
     return group_details_id
 
 async def add_student_to_group(student_id, group_details_id):
-    conn = await engine.connect_to_db()
-    await conn.execute("""
+    # conn = await engine.connect_to_db()
+    await db.execute("""
             INSERT INTO student_details (student_id, group_details_id) 
             VALUES ($1, $2)
         """, student_id, group_details_id)
 
 
 async def get_students_from_group(group_details_id):
-    conn = await engine.connect_to_db()
-    get_students = await conn.fetch("""
+    # conn = await engine.connect_to_db()
+    get_students = await db.fetch("""
             SELECT s.name, s.id 
             FROM student s
             JOIN student_details sd ON s.id = sd.student_id
@@ -219,8 +235,8 @@ async def get_students_from_group(group_details_id):
     return [(record['name'], record['id']) for record in get_students]
 
 async def get_student_details_id(student_id, group_details_id):
-    conn = await engine.connect_to_db()
-    student_details_id = await conn.fetchval("""
+    # conn = await engine.connect_to_db()
+    student_details_id = await db.fetchval("""
         SELECT id FROM student_details WHERE student_id = $1 AND group_details_id = $2
     """, student_id, group_details_id)
 
@@ -228,8 +244,8 @@ async def get_student_details_id(student_id, group_details_id):
 
 
 async def add_student_attendance(student_details_id, date, status="absent"):
-    conn = await engine.connect_to_db()
-    await conn.execute("""
+    # conn = await engine.connect_to_db()
+    await db.execute("""
             INSERT INTO attendance (student_details_id, date, status) 
             VALUES ($1, $2, $3)
             ON CONFLICT (student_details_id, date) 
@@ -243,10 +259,10 @@ async def add_student_attendance(student_details_id, date, status="absent"):
         """, student_details_id, date, status)
 
 async def add_student_absence_reason(student_details_id, date, absence_reason=None):
-    conn = await engine.connect_to_db()
+    # conn = await engine.connect_to_db()
     
     # Проверяем, существует ли запись с текущей датой
-    existing_record = await conn.fetchrow("""
+    existing_record = await db.fetchrow("""
         SELECT status, absence_reason FROM attendance 
         WHERE student_details_id = $1 AND date = $2
     """, student_details_id, date)
@@ -254,29 +270,29 @@ async def add_student_absence_reason(student_details_id, date, absence_reason=No
     if existing_record:
         # Если статус уже установлен, очищаем его
         if existing_record['status'] is not None:
-            await conn.execute("""
+            await db.execute("""
                 UPDATE attendance 
                 SET status = 'other'  -- Устанавливаем значение по умолчанию
                 WHERE student_details_id = $1 AND date = $2
             """, student_details_id, date)
 
         # Обновляем absence_reason
-        await conn.execute("""
+        await db.execute("""
             UPDATE attendance 
             SET absence_reason = $1 
             WHERE student_details_id = $2 AND date = $3
         """, absence_reason, student_details_id, date)
     else:
         # Если записи нет, вставляем новую с absence_reason
-        await conn.execute("""
+        await db.execute("""
             INSERT INTO attendance (student_details_id, date, status, absence_reason) 
             VALUES ($1, $2, 'other', $3)  -- Устанавливаем значение по умолчанию
         """, student_details_id, date, absence_reason)
 
 
 async def attendance_data(group_details_id, month, year):
-    conn = await engine.connect_to_db()
-    res = await conn.fetch("""
+    # conn = await engine.connect_to_db()
+    res = await db.fetch("""
     SELECT s.name AS student_name, 
            EXTRACT(DAY FROM a.date) AS day, 
            a.status 
@@ -297,8 +313,8 @@ async def attendance_data(group_details_id, month, year):
 # end_date = '2024-10-22'
  
 async def attendance_custom(group_details_id, start_date, end_date):
-    conn = await engine.connect_to_db()
-    res = await conn.fetch("""
+    # conn = await engine.connect_to_db()
+    res = await db.fetch("""
     SELECT s.name AS student_name,
             sd.student_id, 
            a.date,  -- Добавлено поле date
@@ -318,8 +334,8 @@ async def attendance_custom(group_details_id, start_date, end_date):
 
 
 async def attendance_alltime_data(group_details_id):
-    conn = await engine.connect_to_db()
-    res = await conn.fetch("""
+    # conn = await engine.connect_to_db()
+    res = await db.fetch("""
     SELECT s.name AS student_name,
             sd.student_id, 
            EXTRACT(DAY FROM a.date) AS day, 
@@ -338,9 +354,9 @@ async def attendance_alltime_data(group_details_id):
 
 
 async def get_month_year_from_attendace(group_details_id) -> dict:
-    conn = await engine.connect_to_db()
+    # conn = await engine.connect_to_db()
 
-    date = await conn.fetch("""
+    date = await db.fetch("""
     SELECT DISTINCT EXTRACT(MONTH FROM a.date) AS month, EXTRACT(YEAR FROM a.date) AS year
     FROM attendance a
     JOIN student_details sd ON a.student_details_id = sd.id
@@ -361,9 +377,9 @@ async def get_month_year_from_attendace(group_details_id) -> dict:
 
 
 async def get_months_by_year(group_details_id, selected_year) -> dict:
-    conn = await engine.connect_to_db()
+    # conn = await engine.connect_to_db()
 
-    months = await conn.fetch("""
+    months = await db.fetch("""
     SELECT DISTINCT EXTRACT(MONTH FROM a.date) AS month
     FROM attendance a
     JOIN student_details sd ON a.student_details_id = sd.id
@@ -374,16 +390,16 @@ async def get_months_by_year(group_details_id, selected_year) -> dict:
     return [int(row['month']) for row in months]
 
 async def update_student_name(new_name, student_id):
-    conn = await engine.connect_to_db()
-    await conn.execute("""
+    # conn = await engine.connect_to_db()
+    await db.execute("""
             UPDATE student
             SET name = $1
             WHERE id = $2;
         """, new_name, student_id)
  
 async def remove_student(student_id):
-    conn = await engine.connect_to_db()
-    await conn.execute("""
+    # conn = await engine.connect_to_db()
+    await db.execute("""
         UPDATE student_details
         SET status = 'inactive'
         WHERE student_id = $1;
@@ -404,8 +420,8 @@ async def remove_student(student_id):
 
 async def get_transfer_info(student_ids):
     # SQL-запрос для получения данных о переводе студентов, включая уровень и группу
-    conn = await engine.connect_to_db()
-    transfer_data = await conn.fetch("""
+    # conn = await engine.connect_to_db()
+    transfer_data = await db.fetch("""
     SELECT s.id AS student_id, l.eng_lvl, g.group_name, sah.date, sah.status, sah.absence_reason
     FROM student_attendance_history sah
     JOIN student s ON sah.student_id = s.id  
@@ -420,8 +436,8 @@ async def get_transfer_info(student_ids):
 
 async def get_transfer_info_custom(student_ids, start_date, end_date):
     # SQL-запрос для получения данных о переводе студентов, включая уровень и группу
-    conn = await engine.connect_to_db()
-    transfer_data = await conn.fetch("""
+    # conn = await engine.connect_to_db()
+    transfer_data = await db.fetch("""
     SELECT s.id AS student_id, l.eng_lvl, g.group_name, sah.date, sah.status, sah.absence_reason
     FROM student_attendance_history sah
     JOIN student s ON sah.student_id = s.id 
@@ -436,8 +452,8 @@ async def get_transfer_info_custom(student_ids, start_date, end_date):
 
 
 async def get_attendance_remainder(student_details_id):
-    conn = await engine.connect_to_db()
-    student_reminder = await conn.fetchrow("""
+    # conn = await engine.connect_to_db()
+    student_reminder = await db.fetchrow("""
             SELECT 
                 COUNT(*) FILTER (WHERE status IN ('present', 'absent')) AS total_classes,
                 COUNT(*) FILTER (WHERE status = 'other') AS other_days,
@@ -465,3 +481,37 @@ async def get_attendance_remainder(student_details_id):
    
 
     return student_reminder
+
+
+async def get_payment(student_id):
+
+    payments = await db.fetch('''SELECT 
+            sd.id AS student_details_id,
+            pm.method_name,
+            pm.amount
+        FROM 
+            student_details sd
+        JOIN 
+            payments p ON sd.id = p.student_details_id
+        JOIN 
+            payment_methods pm ON p.payment_method_id = pm.id
+        WHERE 
+            sd.student_id = $1;''', student_id)
+
+
+    return payments
+
+async def get_payment_methods():
+    payment_methods = await db.fetch('''SELECT id, method_name, amount 
+                                       FROM payment_methods''')
+    return payment_methods 
+
+async def set_student_payment(student_details_id, payment_method_id):
+    payment = await db.execute('''
+        INSERT INTO payments (student_details_id, payment_method_id)
+        VALUES ($1, $2)
+        ON CONFLICT (student_details_id) DO UPDATE
+        SET payment_method_id = EXCLUDED.payment_method_id;
+    ''', student_details_id, payment_method_id)
+    
+    return payment 

@@ -4,7 +4,7 @@ from aiogram_dialog import (
     DialogManager, ChatEvent, 
 )
 from aiogram_dialog.widgets.text import Const
-from database import requests, engine
+from database import requests
 from FSM import Group
 from typing import Any
 
@@ -22,7 +22,7 @@ async def create_level_buttons():
             Const(x),
             id=f"{x.lower().replace('-', '')}",
             on_click=level_button_clicked,
-        ) for x in await engine.student_levels()
+        ) for x in await requests.student_levels()
     ]
 
     return eng_levels

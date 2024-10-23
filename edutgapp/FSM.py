@@ -35,4 +35,6 @@ class Student(StatesGroup):
     transfer_student = State()
     transfer_student_level = State()
     transfer_student_group = State()
+    payment = State()
+    payment_method = State()
 

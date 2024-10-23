@@ -6,6 +6,7 @@ import dialogs.level.window
 import dialogs.attendace.window
 import dialogs.student.window
 
+from database.engine import db
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -23,6 +24,7 @@ bot = Bot(config('TOKEN'))
 dp = Dispatcher(storage=storage)
 
 async def main():
+    await db.connect()
 
     dp.include_router(await dialogs.level.window.level_window())
     dp.include_router(await dialogs.group.window.groups())
@@ -34,10 +36,13 @@ async def main():
     @dp.message(Command("start"))
     async def start(message: Message, dialog_manager: DialogManager):
         await dialog_manager.start(FSM.Level.choose_level, mode=StartMode.RESET_STACK)
+    
     try:
         await dp.start_polling(bot, skip_updates=True)
     except (KeyboardInterrupt, SystemExit):
         print("Bot stopped")
+    finally:
+        await db.close()
     
 
 

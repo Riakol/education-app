@@ -82,8 +82,6 @@ async def starting_month_button_clicked(callback: CallbackQuery, button: Button,
     await manager.switch_to(FSM.Attendance.attendance_start_day)
 
 
-
-
 async def starting_day_button_clicked(callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str):
     await manager.update({"starting_day": item_id})
 
@@ -182,15 +180,15 @@ async def end_day_button_clicked(callback: CallbackQuery, button: Button, manage
 #         await manager.switch_to(FSM.Attendance.attendance_day_from)
 
 
-async def day_button_clicked(callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str):
-    print(f"This is day {item_id}")
-    if not manager.dialog_data.get("year_start") and manager.dialog_data.get("year_end"):
-        await manager.update({"selected_day_to": item_id})
+# async def day_button_clicked(callback: CallbackQuery, button: Button, manager: DialogManager, item_id: str):
+#     print(f"This is day {item_id}")
+#     if not manager.dialog_data.get("year_start") and manager.dialog_data.get("year_end"):
+#         await manager.update({"selected_day_to": item_id})
 
-    else:
-        await manager.update({"selected_day_from": item_id})
+#     else:
+#         await manager.update({"selected_day_from": item_id})
 
-    await manager.switch_to(FSM.Attendance.custom_range)
+#     await manager.switch_to(FSM.Attendance.custom_range)
     
 
 

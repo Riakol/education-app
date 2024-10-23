@@ -16,5 +16,7 @@ async def get_data_student(dialog_manager: DialogManager, **kwargs):
         "transfer_groups": data.get("transfer_groups"),
         "transfer_group_selected": data.get("transfer_group_selected"),
         "transfer_student_id_selected": data.get("transfer_student_id_selected"),
+        "payment_student_id_selected": data.get("payment_student_id_selected"),
+        "payment_methods": data.get("payment_methods"),
         "transfer_level_id": data.get("transfer_level_id"),
     }

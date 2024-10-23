@@ -16,6 +16,7 @@ from dialogs.student import handlers as action
 async def student_window():
     back_to_group_menu = Cancel(text=Const("⬅️ Back"))
     show_levels = await action.level_buttons()
+    show_payment_methods = await action.get_payment_methods()
     editing_student_menu = SwitchTo(text=Const("⬅️ Cancel"), 
             id="goto_editing_student_menu", state=FSM.Student.editing_student_menu)
 
@@ -35,10 +36,10 @@ async def student_window():
                     id="rename_student", on_click=SwitchTo(text=Const("rename student"), 
                                                            id="goto_rename_student", 
                                                            state=FSM.Student.rename_student)),
-                Button(Const("Set reminder"), 
-                    id="reminder", on_click=SwitchTo(text=Const("Set reminder"), 
+                Button(Const("Payment"), 
+                    id="set_payment", on_click=SwitchTo(text=Const("Set reminder"), 
                                                            id="goto_reminder_student", 
-                                                           state=FSM.Student.rename_student)),
+                                                           state=FSM.Student.payment)),
                 width=2,
             ),
             back_to_group_menu,
@@ -73,6 +74,37 @@ async def student_window():
             ),
             editing_student_menu,
             state=FSM.Student.rename_student
+        ),
+        Window(
+            Format("{selected_level}: {group_selected_name} ⤵️"),
+            Group(
+               Select(
+                    Format("{item[0]}"),
+                    id="stud_names",
+                    item_id_getter=lambda x: x[1].widget_id,
+                    items="student_buttons",
+                    on_click=action.payment_selected,
+                ),
+                width=1, 
+            ),
+            editing_student_menu,
+            state=FSM.Student.payment
+        ),
+        Window(
+            Format("{selected_level}: {group_selected_name} ⤵️"),
+            Format("Choose a payment method"),
+            Group(
+               Select(
+                    Format("{item[0]}"),
+                    id="payment_methods",
+                    item_id_getter=lambda x: x[1].widget_id,
+                    items="payment_methods",
+                    on_click=action.payment_method_selected,
+                ),
+                width=1, 
+            ),
+            SwitchTo(text=Const("⬅️ Back"), id="goto_payment_menu", state=FSM.Student.payment),
+            state=FSM.Student.payment_method
         ),
         Window(
             Const("Enter the student's new name:"),
